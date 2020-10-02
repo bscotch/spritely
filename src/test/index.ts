@@ -40,4 +40,9 @@ describe("Spritely", function(){
     expect(()=>new Spritely(sandboxPath('invalid-subimages'))).to.throw(SpritelyError);
   });
 
+  it("can set the padding of a Sprite", async function(){
+    resetSandbox();
+    const sprite = new Spritely(sandboxPath('valid-subimages'));
+    await sprite.setPadding();
+  });
 });

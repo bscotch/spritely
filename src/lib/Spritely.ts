@@ -5,7 +5,9 @@ import {
   assertDirectoryExists,
   assertNonEmptyArray,
   assertNumberGreaterThanZero,
+  SpritelyError,
 } from "./errors";
+import {default as sharp, Sharp } from "sharp";
 
 // The 'image-size' module allows for synchronous operation,
 // which is not provided by 'sharp' (the primary image manipulation pipeline),
@@ -18,6 +20,7 @@ export class Spritely {
   private subimagePaths: string[];
   private subimageWidth: number;
   private subimageHeight: number;
+  private subimages: Sharp[];
 
   /**
    * Create a Sprite instance using a folder full of sprite subimages.
@@ -30,6 +33,7 @@ export class Spritely {
     const {width,height} = Spritely.getSubimagesSizeSync(this.subimagePaths);
     this.subimageWidth = width;
     this.subimageHeight = height;
+    this.subimages = this.subimagePaths.map(subimagePath=>sharp(subimagePath));
   }
 
   get width(){
@@ -42,6 +46,29 @@ export class Spritely {
 
   get paths(){
     return [...this.subimagePaths];
+  }
+
+  /** Attempt to reduce the disk size of the subimages. */
+  async optimize(){
+    // TODO: Resave as PNG with compression options
+  }
+
+  /**
+   * Remove excess padding around subimages.
+   * **WARNING:** this will overwrite your images!
+   * @param maxPadding  Number of padding pixels to keep.
+   *                    This should be at least 1 if border correction is also needed.
+   */
+  async setPadding(maxPadding=3){
+    // TODO: Run the sharp autocropper on each image to find each bounding box
+    await Promise.all(this.subimages.map(async subimage=>{
+      await subimage.trim(10);
+      // TODO: Get the trim offsets somehow?
+    });
+    // TODO: Create a collective bounding box that includes all subimage bounding boxes
+    // TODO: Add the maxpadding factor
+    // TODO: Crop all images with the new bounding box and save.
+    throw new SpritelyError('fixPadding is not implemented');
   }
 
   /**
