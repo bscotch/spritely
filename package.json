@@ -1,0 +1,63 @@
+{
+  "name": "@bscotch/spritely",
+  "version": "0.0.1",
+  "description": "Spritely: Image correction and cleanup for 2D video game sprites",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "main": "./build/index.js",
+  "files": [
+    "build/cli/**/*",
+    "build/lib/**/*",
+    "build/index.*",
+    "build/types/**/*"
+  ],
+  "bin": {
+    "spritely": "./build/cli/spritely.js"
+  },
+  "scripts": {
+    "test": "mocha --inspect --require source-map-support/register --bail ./build/test/index.js",
+    "build": "rm -rf build && npx tsc",
+    "preversion": "git checkout develop && npm run build && npm test",
+    "version": "npx conventional-changelog -p angular -i CHANGELOG.md -s -r 0 && git add -A",
+    "postversion": "git push origin develop && git checkout master && git merge develop && git push origin master --follow-tags && npm publish && git checkout develop",
+    "tsc-live": "npx tsc -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:bscotch/spritely.git"
+  },
+  "keywords": [
+    "sprite",
+    "texture page",
+    "sprite sheet",
+    "image",
+    "2D",
+    "game engine",
+    "art",
+    "art asset",
+    "pipeline",
+    "gamemaker"
+  ],
+  "author": "Adam Coster (https://www.bscotch.net/about)",
+  "license": "MIT",
+  "homepage": "https://github.com/bscotch/spritely",
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "commander": "^6.1.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.12",
+    "@types/mocha": "^8.0.3",
+    "@types/node": "^14.6.4",
+    "@typescript-eslint/eslint-plugin": "^4.3.0",
+    "@typescript-eslint/parser": "^4.3.0",
+    "chai": "^4.2.0",
+    "conventional-changelog-cli": "^2.1.0",
+    "eslint": "^7.8.1",
+    "mocha": "^8.1.3",
+    "source-map-support": "^0.5.19",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.2"
+  }
+}
