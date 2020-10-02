@@ -1,1 +1,2 @@
-export default undefined;
+export {Spritely} from "./lib/Spritely";
+

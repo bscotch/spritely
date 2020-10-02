@@ -27,14 +27,11 @@ neighboring pixels on the texture page, which are transparent black
 (rgba(0,0,0,0)). So if the edge of your sprite is yellow you'll get a faint one-pixel-wide
 border drawn around your image that is darker than the original edge.
 
-<figure>
-  <img src="./images/figure-edge-artifact.png" alt="Edge artifacts when tiling with subpixel camera positioning.">
-  <figcaption>
-    A tile (inset) showing edge-alias artifacting when the camera moves
-    by subpixel (left) or full pixel (right). Artifacts are present in both
-    cases, but much more pronounced with subpixel camera positioning.
-  </figcaption>
-</figure>
+![Edge artifacts when tiling with subpixel camera positioning.](./docs/figure-edge-artifact.png)
+
+*A tile (inset) showing edge-alias artifacts when the camera moves
+by subpixel (left) or full pixel (right). Artifacts are present in both
+cases, but much more pronounced with subpixel camera positioning.*
 
 Spritely identifies the edge pixels and creates a border around them that is the
 same color and mostly transparent, so that interpolation will not so dramatically
