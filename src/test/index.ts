@@ -40,4 +40,9 @@ describe("Spritely", function(){
     expect(()=>new Spritely(sandboxPath('invalid-subimages'))).to.throw(SpritelyError);
   });
 
+  it("can crop a sprite without error", async function(){
+    resetSandbox();
+    const sprite = new Spritely(sandboxPath('valid-subimages'));
+    await sprite.crop();
+  });
 });

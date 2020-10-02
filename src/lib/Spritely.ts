@@ -5,12 +5,23 @@ import {
   assertDirectoryExists,
   assertNonEmptyArray,
   assertNumberGreaterThanZero,
+  SpritelyError,
 } from "./errors";
+import {default as sharp, Sharp } from "sharp";
 
 // The 'image-size' module allows for synchronous operation,
 // which is not provided by 'sharp' (the primary image manipulation pipeline),
 // but is needed since Typescript constructors are synchronous.
 import {imageSize} from "image-size";
+import { randomHex } from "./utility";
+
+interface SharpExt extends Sharp {
+  options:{
+    input:{
+      file:string
+    }
+  }
+}
 
 export class Spritely {
 
@@ -18,6 +29,7 @@ export class Spritely {
   private subimagePaths: string[];
   private subimageWidth: number;
   private subimageHeight: number;
+  private subimages: SharpExt[];
 
   /**
    * Create a Sprite instance using a folder full of sprite subimages.
@@ -30,6 +42,9 @@ export class Spritely {
     const {width,height} = Spritely.getSubimagesSizeSync(this.subimagePaths);
     this.subimageWidth = width;
     this.subimageHeight = height;
+    this.subimages = this.subimagePaths.map(subimagePath=>{
+      return sharp(subimagePath) as SharpExt;
+    });
   }
 
   get width(){
@@ -42,6 +57,61 @@ export class Spritely {
 
   get paths(){
     return [...this.subimagePaths];
+  }
+
+  /** Attempt to reduce the disk size of the subimages. */
+  async optimize(){
+    // TODO: Resave as PNG with compression options
+  }
+
+  /**
+   * Remove excess padding around subimages. Takes into account all subimages
+   * so that all are cropped in exactly the same way.
+   * **WARNING:** this will overwrite your images!
+   * @param extraPadding  Number of padding pixels to keep.
+   *                      This should be at least 1 if border correction is also needed.
+   */
+  async crop(extraPadding=3){
+    // TODO: Run the sharp autocropper on each image to find each bounding box
+    const boundingBox = {
+      left:   Infinity,
+      right: -Infinity,
+      top:    Infinity,
+      bottom:-Infinity,
+    };
+    await Promise.all(this.subimages.map(async subimage=>{
+      // Create a clone so that the trim settings aren't carried downstream
+      const clone = subimage.clone();
+      await clone.trim(1);
+      const trimInfo = await clone.toBuffer({resolveWithObject:true});
+      const dims = trimInfo.info as typeof trimInfo.info & {trimOffsetLeft:number,trimOffsetTop:number};
+      const left = -dims.trimOffsetLeft;
+      const top  = -dims.trimOffsetTop;
+      const right  = left + dims.width;
+      const bottom = top  + dims.height;
+      boundingBox.left   = Math.min(boundingBox.left  ,left);
+      boundingBox.top    = Math.min(boundingBox.top   ,top);
+      boundingBox.right  = Math.max(boundingBox.right ,right);
+      boundingBox.bottom = Math.max(boundingBox.bottom,bottom);
+    }));
+    // Add the additional padding
+    boundingBox.top    = Math.max(boundingBox.top  - extraPadding,0);
+    boundingBox.left   = Math.max(boundingBox.left - extraPadding,0);
+    boundingBox.right  = Math.min(boundingBox.right  + extraPadding,this.width-1);
+    boundingBox.bottom = Math.min(boundingBox.bottom + extraPadding,this.height-1);
+    const tempFileTag = await randomHex(6);
+    await Promise.all(this.subimages.map(async subimage=>{
+      await subimage.extract({
+        top:  boundingBox.top,
+        left: boundingBox.left,
+        width:  boundingBox.right  - boundingBox.left,
+        height: boundingBox.bottom - boundingBox.top
+      });
+      const srcFile = subimage.options.input.file;
+      const outfile = Spritely.postfixFilename(srcFile,tempFileTag);
+      await subimage.toFile(outfile);
+      await fs.move(outfile,srcFile,{overwrite:true});
+    }));
   }
 
   /**
@@ -90,5 +160,16 @@ export class Spritely {
       width: dims.width as number,
       height: dims.height as number
     };
+  }
+
+  /**
+   * Postfix a filename with a string
+   *
+   * @example
+   * `postfixFilename("hello/world.png","123") -> "hello/world-123.png"`
+   */
+  static postfixFilename(sourceFile:string,postfix:string){
+    const {dir,name,ext} = path.parse(sourceFile);
+    return path.join(dir,`${name}-${postfix}${ext}`);
   }
 }

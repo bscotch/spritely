@@ -49,6 +49,18 @@ all subimages in doing so to ensure that they are all cropped in the exact same
 way. In effect, it creates a new bounding box based on the bounding boxes of
 all subimages of a sprite.
 
+![Figure with three panels described below.](docs/cropping.png)
+
+The above figure demonstrates how Spritely crops sprites.
+Panel <b>A</b> shows three subimages
+of the same sprite, where the main content of each subimage takes up only a small
+portion of the total subimage dimensions. Since the location of the content in
+each subimage is different, cropping each subimage individually would result in
+subimages of different sizes with inconsistent positioning relative to the original
+sprite. Panel <b>B</b> shows how Spritely creates a bounding box taking the
+content position of all subimages into account, with panel <b>C</b> showing the
+cropped output.
+
 ## How to use Spritely
 
 ### Dependencies
