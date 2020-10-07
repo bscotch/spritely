@@ -46,6 +46,7 @@
     "chalk": "^4.1.0",
     "commander": "^6.1.0",
     "fs-extra": "^9.0.1",
+    "image-js": "^0.28.0",
     "image-size": "^0.9.1",
     "sharp": "^0.26.1"
   },

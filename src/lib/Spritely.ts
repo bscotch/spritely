@@ -8,6 +8,8 @@ import {
   SpritelyError,
 } from "./errors";
 import {default as sharp, Sharp } from "sharp";
+import {Image} from "image-js";
+
 
 // The 'image-size' module allows for synchronous operation,
 // which is not provided by 'sharp' (the primary image manipulation pipeline),
@@ -15,12 +17,26 @@ import {default as sharp, Sharp } from "sharp";
 import {imageSize} from "image-size";
 import { randomHex } from "./utility";
 
+export type SpriteCreatedBy = 'inkscape'|'clipstudiopaint';
+export interface SpriteEdgeCorrectionOptions {
+  /**
+   * All art programs have their own quirks. By knowing what program
+   * was used to create images we can make corrections specific to that program.
+   */
+  createdBy?: SpriteCreatedBy
+}
+
 interface SharpExt extends Sharp {
   options:{
     input:{
       file:string
     }
   }
+}
+
+interface ImageExt extends Image {
+  getChannel(channel:number):ImageExt,
+  subtractImage(image:ImageExt,options?:{bitDepth?:number,channels?:number[]}):Image,
 }
 
 export class Spritely {
@@ -114,6 +130,13 @@ export class Spritely {
     }));
   }
 
+  /** Correct aliasing issues */
+  async correctEdges(){
+    await Promise.all(this.subimages.map(async subimage=>{
+      await Spritely.correctEdges(subimage);
+    }));
+  }
+
   /**
    * Given a folder (sprite) of PNG images (subimages), return the paths
    * to all subimages.
@@ -171,5 +194,84 @@ export class Spritely {
   static postfixFilename(sourceFile:string,postfix:string){
     const {dir,name,ext} = path.parse(sourceFile);
     return path.join(dir,`${name}-${postfix}${ext}`);
+  }
+
+  static async correctEdges(subimage:SharpExt|string,options?:SpriteEdgeCorrectionOptions){
+    const imagePath = typeof subimage == 'string'
+      ? subimage
+      : subimage.options.input.file;
+    const img = await Image.load(imagePath) as ImageExt;
+    assert(img.alpha,'Images must have an alpha channel to be corrected.');
+    const maxPixelValue = Math.pow(2,img.bitDepth);
+    const alphaChannel = img.channels-1;
+    const nonAlphaChannels = [...Array(img.channels-1)].map((v,i)=>i);
+    const transparentBlackPixel = [...Array(img.channels)].map(()=>0);
+    if(options?.createdBy=='inkscape'){
+      // Inkscape adds a rgba(255,255,255,1) 1px border around blurs. Remove it!
+      for(let pixel=0; pixel<img.size; pixel++){
+        const rgba = img.getPixel(pixel);
+        if(nonAlphaChannels.every(channel=>rgba[channel]==maxPixelValue) && rgba[alphaChannel]==1){
+          img.setPixel(pixel,transparentBlackPixel);
+        }
+      }
+    }
+    // Create a mask from the background (alpha zero) and then erode it by a few pixels.
+    // Add a mask from the foreground (alpha > 0)
+    // Invert to get the background pixels that need to be adjusted
+    // Set the color of those pixels to the the color of the nearest foreground, and the alpha
+    // to something very low so that it mostly isn't visible but won't be treated as background downstream
+    const foreground = img.getChannel(3)
+      .mask({threshold:1/maxPixelValue}) as ImageExt;
+    const expandedForeground = foreground
+      .dilate({kernel:[ [ 1, 1, 1 ] , [ 1, 1, 1 ] , [ 1, 1, 1 ] ]}) as ImageExt;
+
+    const isInForeground = (x:number,y:number)=>foreground.getBitXY(x,y);
+    const isInExpandedForeground = (x:number,y:number)=>expandedForeground.getBitXY(x,y);
+    const isInOutline = (x:number,y:number)=>isInExpandedForeground(x,y) && !isInForeground(x,y);
+
+    await foreground.save('foreground.png');
+    await expandedForeground.save('foreground-expanded.png');
+
+    // There does not seem to be a way to combine masks in image-js,
+    // but we don't really need to for the desired outcome.
+    // Iterate over all pixels. Those in the expanded foreground but not in the foreground
+    // should be set in the original image based on nearby non-background pixels
+    for(let x=0; x<img.width; x++){
+      for(let y=0; y<img.height; y++){
+        if(isInOutline(x,y)){
+          const neighbors = [];
+          for(let ax=x-1; ax<=x+1; ax++){
+            for(let ay=y-1;ay<=y+1; ay++){
+              if(ax==x && ay==y){continue;}
+              if(isInForeground(ax,ay)){
+                neighbors.push(img.getPixelXY(ax,ay));
+              }
+            }
+          }
+          if(neighbors.length){
+            // average the colors
+            const colorSamples:number[][] = transparentBlackPixel.map(()=>[]);
+            for(const neighbor of neighbors){
+              for(let channel=0;channel<img.channels;channel++){
+                colorSamples[channel].push(neighbor[channel]);
+              }
+            }
+            const newColor = colorSamples.map((sample,idx)=>{
+              if(idx==img.channels-1){
+                // Alpha should be 2% or half the min neighboring alpha
+                const minAlpha = sample.reduce((min,value)=>Math.min(min,value),Infinity);
+                return Math.ceil(Math.min(minAlpha * 0.5,0.02 * maxPixelValue));
+              }
+              else{
+                // Use the average color
+                return Math.round(sample.reduce((sum,value)=>sum+value,0)/sample.length);
+              }
+            });
+            img.setPixelXY(x,y,newColor);
+          }
+        }
+      }
+    }
+    await img.save(imagePath);
   }
 }

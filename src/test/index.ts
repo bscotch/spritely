@@ -45,4 +45,13 @@ describe("Spritely", function(){
     const sprite = new Spritely(sandboxPath('valid-subimages'));
     await sprite.crop();
   });
+
+  it("can correct image edges without error", async function(){
+    resetSandbox();
+    const spriteNames = ['pearl','stick','tile_water','tile_grass'];
+    for(const spriteName of spriteNames){
+      const sprite = new Spritely(sandboxPath(spriteName));
+      await sprite.correctEdges();
+    }
+  });
 });
