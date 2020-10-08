@@ -224,9 +224,6 @@ export class Spritely {
     const isInExpandedForeground = (x:number,y:number)=>expandedForeground.getBitXY(x,y);
     const isInOutline = (x:number,y:number)=>isInExpandedForeground(x,y) && !isInForeground(x,y);
 
-    await foreground.save('foreground.png');
-    await expandedForeground.save('foreground-expanded.png');
-
     // There does not seem to be a way to combine masks in image-js,
     // but we don't really need to for the desired outcome.
     // Iterate over all pixels. Those in the expanded foreground but not in the foreground
