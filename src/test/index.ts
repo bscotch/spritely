@@ -51,7 +51,7 @@ describe("Spritely", function(){
     const spriteNames = ['pearl','stick','tile_water','tile_grass'];
     for(const spriteName of spriteNames){
       const sprite = new Spritely(sandboxPath(spriteName));
-      await sprite.correctEdges();
+      await sprite.alphaline();
     }
   });
 });

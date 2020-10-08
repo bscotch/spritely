@@ -125,9 +125,9 @@ export class Spritely {
   }
 
   /** Correct aliasing issues */
-  async correctEdges(){
+  async alphaline(){
     await Promise.all(this.subimages.map(async subimage=>{
-      await Spritely.correctEdges(subimage);
+      await Spritely.alphaline(subimage);
     }));
     return this;
   }
@@ -191,7 +191,7 @@ export class Spritely {
     return path.join(dir,`${name}-${postfix}${ext}`);
   }
 
-  static async correctEdges(subimage:SharpExt|string,options?:SpriteEdgeCorrectionOptions){
+  static async alphaline(subimage:SharpExt|string,options?:SpriteEdgeCorrectionOptions){
     const imagePath = typeof subimage == 'string'
       ? subimage
       : subimage.options.input.file;
