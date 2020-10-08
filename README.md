@@ -43,6 +43,9 @@ same color and mostly transparent, so that interpolation will not so dramaticall
 impact the edges of your images. We call this "<dfn>Alphalining</dfn>" (like
 "outlining", but with a nearly-invisible line).
 
+Note that you shouldn't be able to tell the difference *by eye* between
+the original image and an alphalined image.
+
 ### Excessive padding
 
 It's likely that your subimages consist of something meaningful drawn inside a
