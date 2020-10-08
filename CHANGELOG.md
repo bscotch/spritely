@@ -1,4 +1,8 @@
-# 0.1.0 (2020-10-08)
+## [0.1.1](https://github.com/bscotch/spritely/compare/v0.1.0...v0.1.1) (2020-10-08)
+
+
+
+# [0.1.0](https://github.com/bscotch/spritely/compare/9b6be8d92e647008fd74b9a3f42151bbecb1c05b...v0.1.0) (2020-10-08)
 
 
 ### Features
