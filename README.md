@@ -32,7 +32,7 @@ So if the edge of your sprite is yellow and you are rendering the sprite at
 a subpixel position, you'll get a faint one-pixel-wide
 border drawn around your image that is much darker or brighter than the original edge.
 
-![Edge artifacts when tiling with subpixel camera positioning.](./docs/figure-edge-artifact.png)
+![Edge artifacts when tiling with subpixel camera positioning.](https://github.com/bscotch/spritely/blob/main/docs/figure-edge-artifact.png)
 
 *A tile (inset) showing edge-alias artifacts when the camera moves
 by subpixel (left) or full pixel (right). Artifacts are present in both
@@ -55,7 +55,7 @@ all subimages in doing so to ensure that they are all cropped in the exact same
 way. In effect, it creates a new bounding box based on the bounding boxes of
 all subimages of a sprite.
 
-![Figure with three panels described below.](docs/cropping.png)
+![Figure with three panels described below.](https://github.com/bscotch/spritely/raw/main/docs/cropping.png)
 
 The above figure demonstrates how Spritely crops sprites.
 Panel <b>A</b> shows three subimages
