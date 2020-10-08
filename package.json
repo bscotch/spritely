@@ -20,7 +20,7 @@
     "build": "rm -rf build && npx tsc",
     "preversion": "git checkout develop && npm run build && npm test",
     "version": "npx conventional-changelog -p angular -i CHANGELOG.md -s -r 0 && git add -A",
-    "postversion": "git push origin develop && git checkout master && git merge develop && git push origin master --follow-tags && npm publish && git checkout develop",
+    "postversion": "git push origin develop && git checkout main && git merge develop && git push origin main --follow-tags && npm publish && git checkout develop",
     "tsc-live": "npx tsc -w"
   },
   "repository": {
@@ -44,7 +44,6 @@
   "homepage": "https://github.com/bscotch/spritely",
   "dependencies": {
     "@bscotch/utility": "^0.2.1",
-    "chalk": "^4.1.0",
     "commander": "^6.1.0",
     "fs-extra": "^9.0.1",
     "image-js": "^0.28.0",

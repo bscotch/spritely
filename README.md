@@ -9,23 +9,28 @@ These subimages may represent frames of an animation, or collection of animation
 that the game can cycle through. Frames within a sprite can also be used to create
 alternate versions of a static asset, such as recolors or random variants.
 
+**WARNING** This tool permanently changes your image files. Only use it if your
+images are backed up somewhere.
+
 ## About
 
 Spritely aims to clean up subimages before you import them into your game
 project, solving a few key problems:
 
-+ Edge artifacts (faint outlines)
++ Edge interpolation artifacts (faint outlines around rendered sprites)
 + Excessive padding (increases compiling time)
 
-### Edge artifacts
+### Edge interpolation artifacts
 
 You may notice some border artifacts around your sprites, especially when the camera
 is not positioned in a pixel-perfect way (e.g. in GMS when the
 "Interpolate colors between pixels" is set). This is caused by the engine computing
 a weighted average between the border pixel's color and the color of the
-neighboring pixels on the texture page, which are transparent black
-(rgba(0,0,0,0)). So if the edge of your sprite is yellow you'll get a faint one-pixel-wide
-border drawn around your image that is darker than the original edge.
+neighboring pixels on the texture page, which are transparent black or white
+(`rgba(0,0,0,0)` or `rgba(255,255,255,0)`).
+So if the edge of your sprite is yellow and you are rendering the sprite at
+a subpixel position, you'll get a faint one-pixel-wide
+border drawn around your image that is much darker or brighter than the original edge.
 
 ![Edge artifacts when tiling with subpixel camera positioning.](./docs/figure-edge-artifact.png)
 
@@ -35,7 +40,8 @@ cases, but much more pronounced with subpixel camera positioning.*
 
 Spritely identifies the edge pixels and creates a border around them that is the
 same color and mostly transparent, so that interpolation will not so dramatically
-impact the edges of your images.
+impact the edges of your images. We call this "<dfn>Alphalining</dfn>" (like
+"outlining", but with a nearly-invisible line).
 
 ### Excessive padding
 
@@ -61,29 +67,66 @@ sprite. Panel <b>B</b> shows how Spritely creates a bounding box taking the
 content position of all subimages into account, with panel <b>C</b> showing the
 cropped output.
 
-## How to use Spritely
+## Installation
 
-### Dependencies
+Requires [Node.js 14+](https://nodejs.org/en/).
 
-+ [Node.js 14+](https://nodejs.org/en/)
+In a terminal, run `npm install --global @bscotch/spritely`
 
-### Installation
+## Usage
 
-In the commandline, run `npm install --global @bscotch/spritely`
+### Organizing your files
 
-### Usage
+In order to correct your sprite subimages, they must be organized
+into one folder per sprite, each containing the subimages making
+up that sprite as immediate PNG children. **All subimages must have
+the exact same dimensions.**
 
-Run spritely commands via the commandline by opening up a terminal
-(such as Powershell, cmd, Git Bash, bash, etc) typing in
+For example, you might have a sprite called `enemy` with three
+subimages to create a run cycle. You would save these like this:
+
+```sh
+enemy/ # Folder representing the sprite
+enemy/enemy-idle.png
+enemy/enemy-run.png
+enemy/enemy-sit.png
+```
+
+### Running commands
+
+Run spritely commands by opening up a terminal
+(such as Powershell, cmd, Git Bash, bash, etc), typing in
 `spritely COMMAND ...`, and hitting ENTER.
 
 To find all the commands and options, run `spritely -h`. To get
 more information about a specific command, run `spritely THE-COMMAND -h`.
 
+For example, `spritely crop` will run the `crop` command, while
+`spritely crop -h` will show you the help information for the `crop` command.
+
 *Note that the <dfn>Current Working Directory</dfn> generally refers to
-the folder in which you have your terminal open.*
+the folder in which you opened your terminal open.*
 
-## How it works
+### Examples
 
-### Removing edge artifacts
+With the following file organization:
+
+```sh
+enemy/ # Folder representing the sprite
+enemy/enemy-idle.png
+enemy/enemy-run.png
+enemy/leg/ # A subfolder representing another sprite related to 'enemy'
+enemy/leg/leg-stand.png
+enemy/leg/leg-walk.png
+```
+
+You could do the following:
+
++ `spritely crop --folder enemy` will crop `enemy/enemy-idle.png` and `enemy/enemy-run.png`
++ `spritely crop -f enemy` is shorthand for the same thing
++ `spritely crop --recursive -f enemy` will find all nested folders, treating each as a sprite, so that `enemy/leg/leg-stand.png` and `enemy/leg/leg-walk.png` will also be cropped.
++ `spritely crop -r -f enemy` is shorthand for the same thing
++ `spritely crop -f "C:\User\Me\Desktop\enemy"` provides an *absolute* path if you are not currently in the parent folder of the `enemy` folder.
++ `spritely alphaline -f enemy` outlines the important parts of `enemy/enemy-idle.png` and `enemy/enemy-run.png` with nearly-transparent pixels to improve interpolation for subpixel camera positioning.
++ `spritely fix -f enemy` crops and alphalines the `enemy` sprite.
 
