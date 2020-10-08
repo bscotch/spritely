@@ -1,3 +1,12 @@
+## [0.1.3](https://github.com/bscotch/spritely/compare/v0.1.2...v0.1.3) (2020-10-08)
+
+
+### Bug Fixes
+
+* The alphaline script is calling crop instead of alphaline. ([e86968d](https://github.com/bscotch/spritely/commit/e86968d7aafd201fc436689b7f0bd3f7c600ed5b))
+
+
+
 ## [0.1.2](https://github.com/bscotch/spritely/compare/v0.1.1...v0.1.2) (2020-10-08)
 
 
