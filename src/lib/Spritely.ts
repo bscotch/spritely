@@ -5,7 +5,6 @@ import {
   assertDirectoryExists,
   assertNonEmptyArray,
   assertNumberGreaterThanZero,
-  SpritelyError,
 } from "./errors";
 import {default as sharp, Sharp } from "sharp";
 import {Image} from "image-js";
@@ -75,11 +74,6 @@ export class Spritely {
     return [...this.subimagePaths];
   }
 
-  /** Attempt to reduce the disk size of the subimages. */
-  async optimize(){
-    // TODO: Resave as PNG with compression options
-  }
-
   /**
    * Remove excess padding around subimages. Takes into account all subimages
    * so that all are cropped in exactly the same way.
@@ -88,7 +82,6 @@ export class Spritely {
    *                      This should be at least 1 if border correction is also needed.
    */
   async crop(extraPadding=3){
-    // TODO: Run the sharp autocropper on each image to find each bounding box
     const boundingBox = {
       left:   Infinity,
       right: -Infinity,
@@ -128,6 +121,7 @@ export class Spritely {
       await subimage.toFile(outfile);
       await fs.move(outfile,srcFile,{overwrite:true});
     }));
+    return this;
   }
 
   /** Correct aliasing issues */
@@ -135,6 +129,7 @@ export class Spritely {
     await Promise.all(this.subimages.map(async subimage=>{
       await Spritely.correctEdges(subimage);
     }));
+    return this;
   }
 
   /**
