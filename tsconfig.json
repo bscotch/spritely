@@ -5,6 +5,7 @@
   "exclude":["node_modules"],
   "compilerOptions": {
     "lib":[
+      "dom",
       "es2019.object",
       "es2019.array"
     ],
@@ -29,7 +30,7 @@
     // "importHelpers": true,                 /* Import emit helpers from 'tslib'. */
     // "downlevelIteration": true,            /* Provide full support for iterables in 'for-of', spread, and destructuring when targeting 'ES5' or 'ES3'. */
     // "isolatedModules": true,               /* Transpile each file as a separate module (similar to 'ts.transpileModule'). */
-
+    "skipLibCheck": true, // image-js has some errors that create compile problems
     /* Strict Type-Checking Options */
     "strict": true,                           /* Enable all strict type-checking options. */
     // "noImplicitAny": true,                 /* Raise error on expressions and declarations with an implied 'any' type. */
