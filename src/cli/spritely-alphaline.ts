@@ -12,7 +12,7 @@ async function alphalineSprites(){
   for(const spriteDir of spriteDirs){
     try{
       const sprite = new Spritely(spriteDir);
-      await sprite.crop();
+      await sprite.alphaline();
       console.log(`Alphalined sprite "${spriteDir}"`);
     }
     catch(err){
