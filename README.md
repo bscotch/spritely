@@ -92,7 +92,7 @@ enemy/enemy-run.png
 enemy/enemy-sit.png
 ```
 
-### Running commands
+### Running commands (CLI)
 
 Run spritely commands by opening up a terminal
 (such as Powershell, cmd, Git Bash, bash, etc), typing in
@@ -107,7 +107,7 @@ For example, `spritely crop` will run the `crop` command, while
 *Note that the <dfn>Current Working Directory</dfn> generally refers to
 the folder in which you opened your terminal open.*
 
-### Examples
+#### Examples
 
 With the following file organization:
 
@@ -130,3 +130,46 @@ You could do the following:
 + `spritely alphaline -f enemy` outlines the important parts of `enemy/enemy-idle.png` and `enemy/enemy-run.png` with nearly-transparent pixels to improve interpolation for subpixel camera positioning.
 + `spritely fix -f enemy` crops and alphalines the `enemy` sprite.
 
+### Programmatic Usage
+
+If you want to add Spritely functionality to a Node.js project,
+you can import it into a Node/Typescript module.
+
+The classes and methods are all documented via Typescript
+and JSDocs, so you'll be able to figure out your options
+using the autocomplete features of Typescript/JSDoc-aware
+code editors like Visual Studio Code.
+
+#### Typescript
+
+```ts
+import {Spritely} from "@bscotch/spritely"
+
+async function myPipeline(){
+  const sprite = new Spritely('path/to/your/sprite/folder');
+
+  // use async/await syntax
+  await sprite.crop();
+  await sprite.alphaline();
+
+  // or use .then() syntax
+  sprite.crop().then(cropped=>cropped.alphaline());
+}
+```
+
+#### JavaScript
+
+```js
+const {Spritely} = require("@bscotch/spritely");
+
+async function myPipeline(){
+  const sprite = new Spritely('path/to/your/sprite/folder');
+
+  // use async/await syntax
+  await sprite.crop();
+  await sprite.alphaline();
+
+  // or use .then() syntax
+  sprite.crop().then(cropped=>cropped.alphaline());
+}
+```
