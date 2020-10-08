@@ -48,10 +48,20 @@ describe("Spritely", function(){
 
   it("can correct image edges without error", async function(){
     resetSandbox();
-    const spriteNames = ['pearl','stick','tile_water','tile_grass'];
+    const spriteNames = ['stick','tile_water','tile_grass'];
     for(const spriteName of spriteNames){
       const sprite = new Spritely(sandboxPath(spriteName));
       await sprite.alphaline();
     }
+  });
+
+  xit("can crop a sprite as expected",async function(){
+    resetSandbox();
+    const sprite = new Spritely(sandboxPath('reference'));
+    await sprite.crop();
+  });
+
+  after(function(){
+    resetSandbox();
   });
 });
