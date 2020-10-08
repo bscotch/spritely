@@ -10,7 +10,7 @@ that the game can cycle through. Frames within a sprite can also be used to crea
 alternate versions of a static asset, such as recolors or random variants.
 
 **WARNING** This tool permanently changes your image files. Only use it if your
-images are backed up somewhere.
+images are backed up somewhere. Take particular care when using recursive commands!
 
 ## About
 
@@ -120,11 +120,12 @@ enemy/leg/leg-stand.png
 enemy/leg/leg-walk.png
 ```
 
-You could do the following:
+You could do the following (remember that **your files will be permanently changed** --
+make sure you have backups!):
 
 + `spritely crop --folder enemy` will crop `enemy/enemy-idle.png` and `enemy/enemy-run.png`
 + `spritely crop -f enemy` is shorthand for the same thing
-+ `spritely crop --recursive -f enemy` will find all nested folders, treating each as a sprite, so that `enemy/leg/leg-stand.png` and `enemy/leg/leg-walk.png` will also be cropped.
++ `spritely crop --recursive -f enemy` will find all nested folders, treating each as a sprite, so that `enemy/leg/leg-stand.png` and `enemy/leg/leg-walk.png` will also be cropped. **Use with caution!**
 + `spritely crop -r -f enemy` is shorthand for the same thing
 + `spritely crop -f "C:\User\Me\Desktop\enemy"` provides an *absolute* path if you are not currently in the parent folder of the `enemy` folder.
 + `spritely alphaline -f enemy` outlines the important parts of `enemy/enemy-idle.png` and `enemy/enemy-run.png` with nearly-transparent pixels to improve interpolation for subpixel camera positioning.

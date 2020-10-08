@@ -9,6 +9,7 @@ export function addGeneralOptions(cli: typeof commander){
     `, process.cwd())
     .option("-r --recursive",oneline`
       Treat --folder, and all folders inside --folder (recursively), as sprites.
+      USE WITH CAUTION!
       Each folder with immediate PNG children is treated as a sprite,
       with those children as its subimages.
     `);
