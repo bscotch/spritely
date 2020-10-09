@@ -18,6 +18,10 @@ function resetSandbox() {
   fs.copySync(samplesRoot, sandboxRoot);
 }
 
+function samplesPath(subPath?:string){
+  return path.join(samplesRoot,subPath||'');
+}
+
 function sandboxPath(subPath?:string){
   return path.join(sandboxRoot,subPath||'');
 }
@@ -35,6 +39,19 @@ describe("Spritely", function(){
     expect(sprite.paths.length, 'detected subimages must match actual count').to.equal(subimageCount);
   });
 
+  it("can test if images are equal",async function(){
+    const shouldBeEqual = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      sandboxPath(path.join('reference','pearl.png'))
+    );
+    expect(shouldBeEqual,'identical images should show up as equal').to.be.true;
+    const shouldBeUnequal = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      sandboxPath(path.join('invalid-subimages','subimage-1.png'))
+    );
+    expect(shouldBeUnequal,'different images should show up as unequal').to.be.false;
+  });
+
   it("fails to create a Spritely instance when subimages mismatch in size", async function(){
     resetSandbox();
     expect(()=>new Spritely(sandboxPath('invalid-subimages'))).to.throw(SpritelyError);
@@ -48,10 +65,56 @@ describe("Spritely", function(){
 
   it("can correct image edges without error", async function(){
     resetSandbox();
-    const spriteNames = ['pearl','stick','tile_water','tile_grass'];
+    const spriteNames = ['stick','tile_water','tile_grass'];
     for(const spriteName of spriteNames){
       const sprite = new Spritely(sandboxPath(spriteName));
       await sprite.alphaline();
     }
+  });
+
+  it("cropped image matches expected image",async function(){
+    resetSandbox();
+    const sprite = new Spritely(sandboxPath('reference'));
+    const uncroppedEqualsReference = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      samplesPath(path.join('cropped','pearl.png'))
+    );
+    expect(uncroppedEqualsReference,
+      'uncropped should not match cropped'
+    ).to.be.false;
+
+    await sprite.crop();
+    const croppedEqualsReference = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      samplesPath(path.join('cropped','pearl.png'))
+    );
+    expect(croppedEqualsReference,
+      'cropped should match reference'
+    ).to.be.true;
+  });
+
+  it("alphalined image matches expected image",async function(){
+    resetSandbox();
+    const sprite = new Spritely(sandboxPath('reference'));
+    const uncorrectedEqualsReference = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      samplesPath(path.join('alphalined','pearl.png'))
+    );
+    expect(uncorrectedEqualsReference,
+      'unalphalined should not match alphalined'
+    ).to.be.false;
+
+    await sprite.alphaline();
+    const correctedEqualsReference = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      samplesPath(path.join('alphalined','pearl.png'))
+    );
+    expect(correctedEqualsReference,
+      'alphalined should match reference'
+    ).to.be.true;
+  });
+
+  after(function(){
+    resetSandbox();
   });
 });
