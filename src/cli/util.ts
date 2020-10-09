@@ -12,6 +12,12 @@ export function addGeneralOptions(cli: typeof commander){
       USE WITH CAUTION!
       Each folder with immediate PNG children is treated as a sprite,
       with those children as its subimages.
+    `)
+    .option("-w --watch",oneline`
+      After running once, stay alive and watch for changes in the
+      target files. If any change, re-run the operation on them.
+      Allows you to run the command once and then have your images
+      automatically modified as you create/update them.
     `);
   return cli;
 }
@@ -21,3 +27,4 @@ export function getSpriteDirs(cli:typeof commander){
     ? [cli.folder,...listFoldersSync(cli.folder)]
     : [cli.folder];
 }
+
