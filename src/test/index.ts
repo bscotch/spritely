@@ -72,15 +72,46 @@ describe("Spritely", function(){
     }
   });
 
-  xit("can crop a sprite as expected",async function(){
+  it("cropped image matches expected image",async function(){
     resetSandbox();
     const sprite = new Spritely(sandboxPath('reference'));
-    await sprite.crop();
-    const equalsCroppedReference = await Spritely.imagesAreEqual(
+    const uncroppedEqualsReference = await Spritely.imagesAreEqual(
       sandboxPath(path.join('reference','pearl.png')),
-      samplesPath(path.join('reference','pearl.png'))
+      samplesPath(path.join('cropped','pearl.png'))
     );
-    expect(equalsCroppedReference).to.be.true;
+    expect(uncroppedEqualsReference,
+      'uncropped should not match cropped'
+    ).to.be.false;
+
+    await sprite.crop();
+    const croppedEqualsReference = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      samplesPath(path.join('cropped','pearl.png'))
+    );
+    expect(croppedEqualsReference,
+      'cropped should match reference'
+    ).to.be.true;
+  });
+
+  it("alphalined image matches expected image",async function(){
+    resetSandbox();
+    const sprite = new Spritely(sandboxPath('reference'));
+    const uncorrectedEqualsReference = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      samplesPath(path.join('alphalined','pearl.png'))
+    );
+    expect(uncorrectedEqualsReference,
+      'unalphalined should not match alphalined'
+    ).to.be.false;
+
+    await sprite.alphaline();
+    const correctedEqualsReference = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      samplesPath(path.join('alphalined','pearl.png'))
+    );
+    expect(correctedEqualsReference,
+      'alphalined should match reference'
+    ).to.be.true;
   });
 
   after(function(){
