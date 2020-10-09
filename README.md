@@ -133,6 +133,10 @@ make sure you have backups!):
 + `spritely crop -f "C:\User\Me\Desktop\enemy"` provides an *absolute* path if you are not currently in the parent folder of the `enemy` folder.
 + `spritely alphaline -f enemy` outlines the important parts of `enemy/enemy-idle.png` and `enemy/enemy-run.png` with nearly-transparent pixels to improve interpolation for subpixel camera positioning.
 + `spritely fix -f enemy` crops and alphalines the `enemy` sprite.
++ `spritely fix -f enemy --watch` crops and alphalines the `enemy` sprite,
+  and then starts a watcher to re-run the process any time subimages of the `enemy`
+  sprite are changed or added. This is useful so that you don't have to constantly
+  re-run the script while you're working on your art assets.
 
 ### Programmatic Usage
 
