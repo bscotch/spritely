@@ -18,6 +18,10 @@ function resetSandbox() {
   fs.copySync(samplesRoot, sandboxRoot);
 }
 
+function samplesPath(subPath?:string){
+  return path.join(samplesRoot,subPath||'');
+}
+
 function sandboxPath(subPath?:string){
   return path.join(sandboxRoot,subPath||'');
 }
@@ -33,6 +37,19 @@ describe("Spritely", function(){
     expect(sprite.height, 'detected height must be non-zero').to.be.greaterThan(0);
     expect(sprite.width,  'detected width must be non-zero' ).to.be.greaterThan(0);
     expect(sprite.paths.length, 'detected subimages must match actual count').to.equal(subimageCount);
+  });
+
+  it("can test if images are equal",async function(){
+    const shouldBeEqual = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      sandboxPath(path.join('reference','pearl.png'))
+    );
+    expect(shouldBeEqual,'identical images should show up as equal').to.be.true;
+    const shouldBeUnequal = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      sandboxPath(path.join('invalid-subimages','subimage-1.png'))
+    );
+    expect(shouldBeUnequal,'different images should show up as unequal').to.be.false;
   });
 
   it("fails to create a Spritely instance when subimages mismatch in size", async function(){
@@ -59,6 +76,11 @@ describe("Spritely", function(){
     resetSandbox();
     const sprite = new Spritely(sandboxPath('reference'));
     await sprite.crop();
+    const equalsCroppedReference = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      samplesPath(path.join('reference','pearl.png'))
+    );
+    expect(equalsCroppedReference).to.be.true;
   });
 
   after(function(){

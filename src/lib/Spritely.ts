@@ -266,4 +266,19 @@ export class Spritely {
     }
     await img.save(imagePath);
   }
+
+  /**
+   * Check if two images are exactly equal *in pixel values*
+   * (ignoring metadata).
+   */
+  static async imagesAreEqual(imagePath1:string,imagePath2:string){
+    const [img1,img2] = await Promise
+      .all([imagePath1,imagePath2].map(img=>Image.load(img) as Promise<ImageExt>));
+    // Start with cheap checks, then check value-by-value aborting when one fails.
+    return img1.channels == img2.channels &&
+      img1.bitDepth  == img2.bitDepth &&
+      img1.alpha == img2.alpha &&
+      img1.size == img2.size &&
+      img1.data.every((value:number,idx:number)=>value==img2.data[idx]);
+  }
 }
