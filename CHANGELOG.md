@@ -1,3 +1,15 @@
+# [0.2.0](https://github.com/bscotch/spritely/compare/v0.1.3...v0.2.0) (2020-10-09)
+
+
+### Features
+
+* Add static method to Spritely class for checking two images for equality. ([7887862](https://github.com/bscotch/spritely/commit/7887862642be1b0323fdefbc12a40b7537ce3bad))
+* Add tests to ensure that cropping and alphalining actually do what they're supposed to. Closes [#1](https://github.com/bscotch/spritely/issues/1). ([d6e2ff7](https://github.com/bscotch/spritely/commit/d6e2ff7421ea7d4f2beb944907c28982a972d6ab))
+* Create funding file. ([1cf2e7e](https://github.com/bscotch/spritely/commit/1cf2e7ebf6c5d76177706753afaa981df130c4a4))
+* Replace Sharp-based cropping with custom cropping using image-js, using alpha-zero pixels to define background. Closes [#2](https://github.com/bscotch/spritely/issues/2) ([05d1300](https://github.com/bscotch/spritely/commit/05d1300dc118f0dfd63456f9cf79077d27cd0f1c))
+
+
+
 ## [0.1.3](https://github.com/bscotch/spritely/compare/v0.1.2...v0.1.3) (2020-10-08)
 
 
