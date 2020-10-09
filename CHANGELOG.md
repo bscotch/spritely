@@ -1,3 +1,19 @@
+# [0.3.0](https://github.com/bscotch/spritely/compare/v0.2.0...v0.3.0) (2020-10-09)
+
+
+### Bug Fixes
+
+* Change how image foreground is detected so that alphalining the same image twice has the same result as doing so once. Closes [#3](https://github.com/bscotch/spritely/issues/3). ([3d3ea0a](https://github.com/bscotch/spritely/commit/3d3ea0a2f2225a4cf56aa17a1e3d841059a9b9a3))
+
+
+### Features
+
+* Add watcher option to sprite-alphaline command. ([cdf1fbc](https://github.com/bscotch/spritely/commit/cdf1fbc5371d40b81ecb721353d264fd9ebc90e0))
+* Add watcher option to sprite-crop command. ([e994c65](https://github.com/bscotch/spritely/commit/e994c652170aa45a5b65bdf3543b51f55f98b047))
+* Add watcher option to spritely-fix CLI command. ([2ce71ee](https://github.com/bscotch/spritely/commit/2ce71ee99bfdff5f4436302257962036721a6ebd))
+
+
+
 # [0.2.0](https://github.com/bscotch/spritely/compare/v0.1.3...v0.2.0) (2020-10-09)
 
 
