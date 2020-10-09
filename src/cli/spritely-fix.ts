@@ -6,7 +6,7 @@ import chokidar from "chokidar";
 import {toPosixPath} from "@bscotch/utility";
 import path from "path";
 
-async function cropSpriteDir(spriteDir:string){
+async function fixSpriteDir(spriteDir:string){
   try{
     const sprite = new Spritely(spriteDir);
     await (await sprite.crop()).alphaline();
@@ -17,9 +17,9 @@ async function cropSpriteDir(spriteDir:string){
   }
 }
 
-async function cropSpriteDirs(spriteDirs:string[]){
+async function fixSpriteDirs(spriteDirs:string[]){
   for(const spriteDir of spriteDirs){
-    await cropSpriteDir(spriteDir);
+    await fixSpriteDir(spriteDir);
   }
 }
 
@@ -29,7 +29,7 @@ async function alphalineSprites(){
 
   // Get all directories starting in folder
   const spriteDirs = getSpriteDirs(cli);
-  await cropSpriteDirs(spriteDirs);
+  await fixSpriteDirs(spriteDirs);
 
   if(cli.watch){
     const glob = toPosixPath(
@@ -37,7 +37,7 @@ async function alphalineSprites(){
         ? path.join(cli.folder,'**/*.png')
         : path.join(cli.folder,'*.png')
     );
-    const rerunOnDir = (filepath:string)=>cropSpriteDir(path.dirname(filepath));
+    const rerunOnDir = (filepath:string)=>fixSpriteDir(path.dirname(filepath));
     chokidar
       .watch(glob,{ignoreInitial:true})
       .on("ready",()=>console.log(`Watching for sprite changes matching pattern: ${glob}`))
