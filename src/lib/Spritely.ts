@@ -175,6 +175,7 @@ export class Spritely {
     const img = await Image.load(imagePath) as ImageExt;
     assert(img.alpha,'Images must have an alpha channel to be corrected.');
     const maxPixelValue = Math.pow(2,img.bitDepth);
+    const alphalineMaxValue = Math.ceil(0.02 * maxPixelValue);
     const alphaChannel = img.channels-1;
     const nonAlphaChannels = [...Array(img.channels-1)].map((v,i)=>i);
     const transparentBlackPixel = [...Array(img.channels)].map(()=>0);
@@ -192,7 +193,7 @@ export class Spritely {
     // Invert to get the background pixels that need to be adjusted
     // Set the color of those pixels to the the color of the nearest foreground, and the alpha
     // to something very low so that it mostly isn't visible but won't be treated as background downstream
-    const foreground = Spritely.getForegroundMask(img);
+    const foreground = Spritely.getForegroundMask(img,(alphalineMaxValue+1)/maxPixelValue);
     const expandedForeground = foreground
       .dilate({kernel:[ [ 1, 1, 1 ] , [ 1, 1, 1 ] , [ 1, 1, 1 ] ]}) as ImageExt;
 
@@ -228,7 +229,7 @@ export class Spritely {
               if(idx==img.channels-1){
                 // Alpha should be 2% or half the min neighboring alpha
                 const minAlpha = sample.reduce((min,value)=>Math.min(min,value),Infinity);
-                return Math.ceil(Math.min(minAlpha * 0.5,0.02 * maxPixelValue));
+                return Math.ceil(Math.min(minAlpha * 0.5,alphalineMaxValue));
               }
               else{
                 // Use the average color
@@ -258,9 +259,17 @@ export class Spritely {
       img1.data.every((value:number,idx:number)=>value==img2.data[idx]);
   }
 
-  static getForegroundMask(image:ImageExt){
+  /**
+   * Get the foreground mask (a binary imae) of an image from
+   * thresholding based on the alpha channel.
+   * @param foregroundMinAlphaFraction The minimum alpha value of the foreground.
+   * Any alpha >= than this is considered foreground. On a 0-1 scale.
+   * Defaults to 1/bitDepth (i.e. any alpha besides 0 is foreground)
+   */
+  static getForegroundMask(image:ImageExt,foregroundMinAlphaFraction?:number){
+    const threshold = foregroundMinAlphaFraction || 1/Math.pow(2,image.bitDepth);
     return image.getChannel(image.channels-1)
-      .mask({threshold:1/Math.pow(2,image.bitDepth)}) as ImageExt;
+      .mask({threshold}) as ImageExt;
   }
 
   static getForegroundBounds(image:ImageExt){

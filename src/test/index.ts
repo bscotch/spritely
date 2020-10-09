@@ -93,6 +93,19 @@ describe("Spritely", function(){
     ).to.be.true;
   });
 
+  it("twice-cropped is the same as once-cropped",async function(){    resetSandbox();
+    const sprite = new Spritely(sandboxPath('reference'));
+    await sprite.crop();
+    await sprite.crop();
+    const croppedEqualsReference = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      samplesPath(path.join('cropped','pearl.png'))
+    );
+    expect(croppedEqualsReference,
+      'twice-cropped should match reference'
+    ).to.be.true;
+  });
+
   it("alphalined image matches expected image",async function(){
     resetSandbox();
     const sprite = new Spritely(sandboxPath('reference'));
@@ -111,6 +124,19 @@ describe("Spritely", function(){
     );
     expect(correctedEqualsReference,
       'alphalined should match reference'
+    ).to.be.true;
+  });
+
+  it("twice-alphalined should match once-alphalined",async function(){
+    const sprite = new Spritely(sandboxPath('reference'));
+    await sprite.alphaline();
+    await sprite.alphaline();
+    const alphalinedEqualsReference = await Spritely.imagesAreEqual(
+      sandboxPath(path.join('reference','pearl.png')),
+      samplesPath(path.join('alphalined','pearl.png'))
+    );
+    expect(alphalinedEqualsReference,
+      'twice-alphalined should match reference'
     ).to.be.true;
   });
 
