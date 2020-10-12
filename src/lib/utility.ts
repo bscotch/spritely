@@ -26,3 +26,10 @@ export function randomHex (bytes=8): Promise<string>{
     });
   });
 }
+
+export function sha256 (data: crypto.BinaryLike){
+  return crypto
+    .createHash('sha256')
+    .update(data)
+    .digest('hex');
+}

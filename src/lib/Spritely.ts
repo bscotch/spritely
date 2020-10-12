@@ -13,6 +13,7 @@ import {Image} from "image-js";
 // which is not provided by 'sharp' (the primary image manipulation pipeline),
 // but is needed since Typescript constructors are synchronous.
 import {imageSize} from "image-size";
+import { sha256 } from "./utility";
 
 export type SpriteCreatedBy = 'inkscape'|'clipstudiopaint';
 export interface SpriteEdgeCorrectionOptions {
@@ -51,6 +52,14 @@ export class Spritely {
   get width(){ return this.subimageWidth; }
   get height(){ return this.subimageHeight; }
   get paths(){ return [...this.subimagePaths]; }
+
+  /**
+   * Get the checksum of each subimage, calculated on the pixel values
+   * only (metadata excluded). Useful for checking equality or tracking content changes.
+   */
+  get checksums(): Promise<string[]>{
+    return Promise.all(this.paths.map(imagePath=>Spritely.pixelsChecksum(imagePath)));
+  }
 
   /** Check if two sprites are exactly equal (have the same subimages) */
   async equals(otherSprite:Spritely){
@@ -257,6 +266,15 @@ export class Spritely {
       img1.alpha == img2.alpha &&
       img1.size == img2.size &&
       img1.data.every((value:number,idx:number)=>value==img2.data[idx]);
+  }
+
+  /**
+   * Compute a checksum based on the pixel values of an image.
+   * Remains static even when file metadata changes.
+   */
+  static async pixelsChecksum(imagePath:string){
+    const values = (await Image.load(imagePath) as Image).data;
+    return sha256(Buffer.from(values));
   }
 
   /**

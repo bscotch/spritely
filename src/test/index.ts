@@ -3,6 +3,7 @@ import {Spritely} from "../lib/Spritely";
 import fs from "fs-extra";
 import path from "path";
 import { SpritelyError } from "../lib/errors";
+import {fixSprites} from "../cli/fix";
 
 const sandboxRoot = "./sandbox";
 const samplesRoot = "./samples";
@@ -138,6 +139,17 @@ describe("Spritely", function(){
     expect(alphalinedEqualsReference,
       'twice-alphalined should match reference'
     ).to.be.true;
+  });
+
+  it("CLI commands can recurse through nested folders",async function(){
+    const getChecksums = ()=>{
+      return new Spritely(sandboxPath(path.join('dir','subdir','subsubdir'))).checksums;
+    };
+    const startingChecksums = await getChecksums();
+    expect(startingChecksums.length,'should be starting with two images').to.equal(2);
+    await fixSprites({folder: sandboxPath('dir'),recursive:true});
+    const endingChecksums = await getChecksums();
+    expect(startingChecksums).to.not.eql(endingChecksums);
   });
 
   after(function(){
