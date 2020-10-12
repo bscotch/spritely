@@ -3,7 +3,7 @@ import {Spritely} from "../lib/Spritely";
 import fs from "fs-extra";
 import path from "path";
 import { SpritelyError } from "../lib/errors";
-import {fixSprites} from "../cli/fix";
+import {fixSprites} from "../cli/util";
 
 const sandboxRoot = "./sandbox";
 const samplesRoot = "./samples";
@@ -29,8 +29,11 @@ function sandboxPath(subPath?:string){
 
 describe("Spritely", function(){
 
-  it("can create a Spritely instance from a folder of subimages", async function(){
+  beforeEach(function(){
     resetSandbox();
+  });
+
+  it("can create a Spritely instance from a folder of subimages", async function(){
     const validSubimagesFolder = sandboxPath('valid-subimages');
     const subimageCount = fs.readdirSync(validSubimagesFolder).length;
     expect(subimageCount,'sample subimages must exist').to.be.greaterThan(0);
@@ -54,18 +57,15 @@ describe("Spritely", function(){
   });
 
   it("fails to create a Spritely instance when subimages mismatch in size", async function(){
-    resetSandbox();
     expect(()=>new Spritely(sandboxPath('invalid-subimages'))).to.throw(SpritelyError);
   });
 
   it("can crop a sprite without error", async function(){
-    resetSandbox();
     const sprite = new Spritely(sandboxPath('valid-subimages'));
     await sprite.crop();
   });
 
   it("can correct image edges without error", async function(){
-    resetSandbox();
     const spriteNames = ['stick','tile_water','tile_grass'];
     for(const spriteName of spriteNames){
       const sprite = new Spritely(sandboxPath(spriteName));
@@ -74,7 +74,6 @@ describe("Spritely", function(){
   });
 
   it("cropped image matches expected image",async function(){
-    resetSandbox();
     const sprite = new Spritely(sandboxPath('reference'));
     const uncroppedEqualsReference = await Spritely.imagesAreEqual(
       sandboxPath(path.join('reference','pearl.png')),
@@ -108,7 +107,6 @@ describe("Spritely", function(){
   });
 
   it("alphalined image matches expected image",async function(){
-    resetSandbox();
     const sprite = new Spritely(sandboxPath('reference'));
     const uncorrectedEqualsReference = await Spritely.imagesAreEqual(
       sandboxPath(path.join('reference','pearl.png')),
@@ -147,9 +145,22 @@ describe("Spritely", function(){
     };
     const startingChecksums = await getChecksums();
     expect(startingChecksums.length,'should be starting with two images').to.equal(2);
-    await fixSprites({folder: sandboxPath('dir'),recursive:true});
+    await fixSprites('crop',{folder: sandboxPath('dir'),recursive:true});
     const endingChecksums = await getChecksums();
     expect(startingChecksums).to.not.eql(endingChecksums);
+  });
+
+  it("can move a sprite", async function(){
+    expect(()=>new Spritely(sandboxPath(path.join('dir','subdir','subsubdir')))).to.not.throw();
+    await fixSprites(['crop','alphaline'],{
+      folder: sandboxPath(path.join('dir')),
+      move: sandboxPath('moved'),
+      recursive:true
+    });
+    // Should be able to load the sprite from where it was moved
+    new Spritely(sandboxPath(path.join('moved','subdir','subsubdir')));
+    // Should get errors when trying to get the original sprite
+    expect(()=>new Spritely(sandboxPath(path.join('dir','subdir','subsubdir')))).to.throw();
   });
 
   after(function(){

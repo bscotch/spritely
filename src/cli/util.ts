@@ -1,5 +1,16 @@
-import { listFoldersSync, oneline } from "@bscotch/utility";
+import { listFoldersSync, oneline, toPosixPath } from "@bscotch/utility";
 import commander from "commander";
+import { Spritely } from "../lib/Spritely";
+import path from "path";
+import chokidar from "chokidar";
+
+export interface SpritelyCliGeneralOptions {
+  folder: string,
+  recursive?: boolean,
+  watch?: boolean,
+  move?: string,
+}
+
 
 export function addGeneralOptions(cli: typeof commander){
   cli.option("-f --folder <path>", oneline`
@@ -18,6 +29,11 @@ export function addGeneralOptions(cli: typeof commander){
       target files. If any change, re-run the operation on them.
       Allows you to run the command once and then have your images
       automatically modified as you create/update them.
+    `)
+    .option("-m --move <path>",oneline`
+      Move images to a different folder after modification.
+      Useful for pipelines that use presence/absence
+      of images as signals. Maintains relative paths.
     `);
   return cli;
 }
@@ -28,3 +44,49 @@ export function getSpriteDirs(folder:string,recursive?:boolean){
     : [folder];
 }
 
+type SpritelyFixMethod = 'crop'|'alphaline';
+
+async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDir:string,sourceRoot:string,moveRoot?:string){
+  const methods = typeof method == 'string' ? [method] : method;
+  try{
+    const sprite = new Spritely(spriteDir);
+    for(const spriteMethod of methods){
+      await sprite[spriteMethod]();
+    }
+    if(moveRoot){
+      const moveTo = path.join(moveRoot, path.relative(sourceRoot,path.dirname(spriteDir)));
+      await sprite.move(moveTo);
+    }
+    console.log(`Cleaned sprite "${spriteDir}"`);
+  }
+  catch(err){
+    console.log(`Sprite clean failed for "${spriteDir}"`,err?.message);
+  }
+}
+
+async function fixSpriteDirs(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDirs:string[],sourceRoot:string,moveRoot?:string){
+  for(const spriteDir of spriteDirs){
+    await fixSpriteDir(method,spriteDir,sourceRoot,moveRoot);
+  }
+}
+
+
+export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],options: SpritelyCliGeneralOptions){
+  // Get all directories starting in folder
+  const spriteDirs = getSpriteDirs(options.folder,options.recursive);
+  await fixSpriteDirs(method,spriteDirs,options.folder,options.move);
+
+  if(options.watch){
+    const glob = toPosixPath(
+      options.recursive
+        ? path.join(options.folder,'**/*.png')
+        : path.join(options.folder,'*.png')
+    );
+    const rerunOnDir = (filepath:string)=>fixSpriteDir(method,path.dirname(filepath),options.folder,options.move);
+    chokidar
+      .watch(glob,{ignoreInitial:true})
+      .on("ready",()=>console.log(`Watching for sprite changes matching pattern: ${glob}`))
+      .on('add',rerunOnDir)
+      .on('change',rerunOnDir);
+  }
+}
