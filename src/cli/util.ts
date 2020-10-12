@@ -22,9 +22,9 @@ export function addGeneralOptions(cli: typeof commander){
   return cli;
 }
 
-export function getSpriteDirs(cli:typeof commander){
-  return cli.recursive
-    ? [cli.folder,...listFoldersSync(cli.folder)]
-    : [cli.folder];
+export function getSpriteDirs(folder:string,recursive?:boolean){
+  return recursive
+    ? [folder,...listFoldersSync(folder,recursive)]
+    : [folder];
 }
 
