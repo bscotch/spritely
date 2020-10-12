@@ -3,7 +3,7 @@ import {Spritely} from "../lib/Spritely";
 import fs from "fs-extra";
 import path from "path";
 import { SpritelyError } from "../lib/errors";
-import {fixSprites} from "../cli/fix";
+import {fixSprites} from "../cli/util";
 
 const sandboxRoot = "./sandbox";
 const samplesRoot = "./samples";
@@ -145,14 +145,14 @@ describe("Spritely", function(){
     };
     const startingChecksums = await getChecksums();
     expect(startingChecksums.length,'should be starting with two images').to.equal(2);
-    await fixSprites({folder: sandboxPath('dir'),recursive:true});
+    await fixSprites('crop',{folder: sandboxPath('dir'),recursive:true});
     const endingChecksums = await getChecksums();
     expect(startingChecksums).to.not.eql(endingChecksums);
   });
 
   it("can move a sprite", async function(){
     expect(()=>new Spritely(sandboxPath(path.join('dir','subdir','subsubdir')))).to.not.throw();
-    await fixSprites({
+    await fixSprites(['crop','alphaline'],{
       folder: sandboxPath(path.join('dir')),
       move: sandboxPath('moved'),
       recursive:true
@@ -163,7 +163,7 @@ describe("Spritely", function(){
     expect(()=>new Spritely(sandboxPath(path.join('dir','subdir','subsubdir')))).to.throw();
   });
 
-  // after(function(){
-  //   resetSandbox();
-  // });
+  after(function(){
+    resetSandbox();
+  });
 });
