@@ -7,6 +7,7 @@ import {
   assertNumberGreaterThanZero,
 } from "./errors";
 import {Image} from "image-js";
+import {removeEmptyDirsSync} from "@bscotch/utility";
 
 
 // The 'image-size' module allows for synchronous operation,
@@ -151,6 +152,8 @@ export class Spritely {
     for(const subimagePath of this.paths){
       fs.removeSync(subimagePath);
     }
+    // Attempt to remove the folders (and clean recursively)
+    removeEmptyDirsSync(this.spriteRoot);
     this.subimagePaths = [];
   }
 

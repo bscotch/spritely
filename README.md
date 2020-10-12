@@ -141,7 +141,9 @@ make sure you have backups!):
   updates, since the watcher may trigger before all images are updated.
 + `spritely fix -f enemy --move somewhere/else` moves the sprite to `somewhere/else` after
   it has been processed. Also works recursively, with path provided to `--move` being used
-  as the root directory. This is useful for pipelines where the presence/absence of images
+  as the root directory. Note that old subimages in the target directory **are deleted** prior
+  to moving the new ones, to ensure that the target directory has only the expected images.
+  This feature is useful for pipelines where the presence/absence of images
   is used as an indicator for progress through the pipeline, or for export tools that
   refuse to overwrite existing images. For example, by also using the `--watch` flag every
   time your images are exported they'll be automatically processed and then moved,

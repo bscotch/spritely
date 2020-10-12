@@ -1,8 +1,9 @@
-import { listFoldersSync, oneline, toPosixPath } from "@bscotch/utility";
+import { listFilesByExtensionSync, listFoldersSync, oneline, toPosixPath } from "@bscotch/utility";
 import commander from "commander";
 import { Spritely } from "../lib/Spritely";
 import path from "path";
 import chokidar from "chokidar";
+import fs from "fs-extra";
 
 export interface SpritelyCliGeneralOptions {
   folder: string,
@@ -34,14 +35,18 @@ export function addGeneralOptions(cli: typeof commander){
       Move images to a different folder after modification.
       Useful for pipelines that use presence/absence
       of images as signals. Maintains relative paths.
+      Deletes any existing subimages before copying the new
+      ones over.
     `);
   return cli;
 }
 
 export function getSpriteDirs(folder:string,recursive?:boolean){
-  return recursive
+  const folders = recursive
     ? [folder,...listFoldersSync(folder,recursive)]
     : [folder];
+  folders.reverse();
+  return folders;
 }
 
 type SpritelyFixMethod = 'crop'|'alphaline';
@@ -54,8 +59,14 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
       await sprite[spriteMethod]();
     }
     if(moveRoot){
-      const moveTo = path.join(moveRoot, path.relative(sourceRoot,path.dirname(spriteDir)));
-      await sprite.move(moveTo);
+      const movedSpritePath = path.join(moveRoot, path.relative(sourceRoot,spriteDir));
+      // Clear any existing images in the target directory
+      try{
+        listFilesByExtensionSync(movedSpritePath,'png')
+          .forEach(existingSubimage=>fs.removeSync(existingSubimage));
+      }
+      catch{}
+      await sprite.move(path.dirname(movedSpritePath));
     }
     console.log(`Cleaned sprite "${spriteDir}"`);
   }
