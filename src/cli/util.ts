@@ -1,6 +1,14 @@
 import { listFoldersSync, oneline } from "@bscotch/utility";
 import commander from "commander";
 
+export interface SpritelyCliGeneralOptions {
+  folder: string,
+  recursive?: boolean,
+  watch?: boolean,
+  move?: string,
+}
+
+
 export function addGeneralOptions(cli: typeof commander){
   cli.option("-f --folder <path>", oneline`
       Path to folder of subimages. Only
@@ -18,6 +26,11 @@ export function addGeneralOptions(cli: typeof commander){
       target files. If any change, re-run the operation on them.
       Allows you to run the command once and then have your images
       automatically modified as you create/update them.
+    `)
+    .option("-m --move <path>",oneline`
+      Move images to a different folder after modification.
+      Useful for pipelines that use presence/absence
+      of images as signals. Maintains relative paths.
     `);
   return cli;
 }
