@@ -1,3 +1,12 @@
+# [0.5.0](https://github.com/bscotch/spritely/compare/v0.4.2...v0.5.0) (2020-10-12)
+
+
+### Features
+
+* Moving a sprite now cleans up empty directories left behind, and ensures there aren't any unexpected images in the destination. ([5209447](https://github.com/bscotch/spritely/commit/52094475819e0aee3aa51f75a9d6a2212e874d0f))
+
+
+
 ## [0.4.2](https://github.com/bscotch/spritely/compare/v0.4.1...v0.4.2) (2020-10-12)
 
 
