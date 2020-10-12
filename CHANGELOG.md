@@ -1,3 +1,7 @@
+# [0.4.0](https://github.com/bscotch/spritely/compare/v0.3.3...v0.4.0) (2020-10-12)
+
+
+
 ## [0.3.3](https://github.com/bscotch/spritely/compare/v0.3.2...v0.3.3) (2020-10-12)
 
 
