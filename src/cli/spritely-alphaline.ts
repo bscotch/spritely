@@ -22,7 +22,7 @@ async function alphalineSprites(){
     .parse();
 
   // Get all directories starting in folder
-  const spriteDirs = getSpriteDirs(cli);
+  const spriteDirs = getSpriteDirs(cli.folder,cli.recursive);
   for(const spriteDir of spriteDirs){
     await alphalineSpriteDir(spriteDir);
   }
