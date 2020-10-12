@@ -1,3 +1,18 @@
+## [0.3.3](https://github.com/bscotch/spritely/compare/v0.3.2...v0.3.3) (2020-10-12)
+
+
+### Bug Fixes
+
+* The recursion CLI flag will actually allow for recursion. ([79f2f7b](https://github.com/bscotch/spritely/commit/79f2f7bfa5d4e6eb5f20a205bf66889f28e7619e))
+
+
+### Features
+
+* Include sample images with nesting to test against recursion. ([0216178](https://github.com/bscotch/spritely/commit/02161789bccf7b1aaa42d7eeb71d5655d3700eae))
+* Spritely can now compute checksums based on pixel data, ignoring metadata, to make image comparison meaningful. ([0d109de](https://github.com/bscotch/spritely/commit/0d109de6562b27e9156b9503c2c8d5badf441f45))
+
+
+
 ## [0.3.2](https://github.com/bscotch/spritely/compare/v0.3.1...v0.3.2) (2020-10-12)
 
 
