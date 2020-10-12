@@ -49,9 +49,16 @@ export class Spritely {
     this.subimageHeight = height;
   }
 
+  /** The name of this sprite (its folder name) */
+  get name(){
+    return path.basename(this.spriteRoot);
+  }
   get width(){ return this.subimageWidth; }
   get height(){ return this.subimageHeight; }
-  get paths(){ return [...this.subimagePaths]; }
+  get paths(){
+    assert(this.subimagePaths.length,`Sprite ${this.name} has no subimages`);
+    return [...this.subimagePaths];
+  }
 
   /**
    * Get the checksum of each subimage, calculated on the pixel values
@@ -119,6 +126,40 @@ export class Spritely {
   async alphaline(){
     await Promise.all(this.paths.map(path=>Spritely.alphaline(path)));
     return this;
+  }
+
+  /** Copy this sprite (folder + subimages) to another location */
+  async copy(destinationFolder:string){
+    const toSpriteFolder = path.join(destinationFolder,this.name);
+    await fs.ensureDir(toSpriteFolder);
+    // Move things synchronously to make sure no watchers etc will trigger
+    // in the middle of the process.
+    const newPaths: string[] = [];
+    for(const subimagePath of this.paths){
+      const newPath = path.join(toSpriteFolder,path.basename(subimagePath));
+      newPaths.push(newPath);
+      fs.copyFileSync(subimagePath,newPath);
+    }
+  }
+
+  /**
+   * Delete subimages for this sprite. Will cause errors to be thrown
+   * for many (but not all) future attempts to do anything with this
+   * Spritely instance.
+   */
+  async delete(){
+    for(const subimagePath of this.paths){
+      fs.removeSync(subimagePath);
+    }
+    this.subimagePaths = [];
+  }
+
+  /**
+   * Shorthand for .copy() followedy by .delete()
+   */
+  async move(destinationFolder:string){
+    await this.copy(destinationFolder);
+    await this.delete();
   }
 
   /**
