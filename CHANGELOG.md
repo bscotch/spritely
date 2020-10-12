@@ -1,3 +1,14 @@
+## [0.4.2](https://github.com/bscotch/spritely/compare/v0.4.1...v0.4.2) (2020-10-12)
+
+
+### Features
+
+* CLI users can now use the --move option for all commands. ([60ec154](https://github.com/bscotch/spritely/commit/60ec15425afe3e06d74320bc72124c15a76dc96e))
+* Spritely instances can now move and delete their subimages. ([cb17b47](https://github.com/bscotch/spritely/commit/cb17b47927fe3eef5f7aecb1a31d386f5f2c3879))
+* The 'fix' subcommand now allows the --move option, moving fixed images to a different file location. ([72935c8](https://github.com/bscotch/spritely/commit/72935c8dea67e12d569f6c0ae0c691b7f69e1164))
+
+
+
 ## [0.4.1](https://github.com/bscotch/spritely/compare/v0.4.0...v0.4.1) (2020-10-12)
 
 
