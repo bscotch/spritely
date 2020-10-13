@@ -1,3 +1,12 @@
+# [0.6.0](https://github.com/bscotch/spritely/compare/v0.5.0...v0.6.0) (2020-10-13)
+
+
+### Features
+
+* A new SpritelyBatch class allows for easy conversion of a folder of sprite resources into a colletion of Spritely instances. ([429fa1a](https://github.com/bscotch/spritely/commit/429fa1acc1de947bfb153bf15ca3eb477c35d573))
+
+
+
 # [0.5.0](https://github.com/bscotch/spritely/compare/v0.4.2...v0.5.0) (2020-10-12)
 
 
