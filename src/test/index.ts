@@ -4,6 +4,7 @@ import fs from "fs-extra";
 import path from "path";
 import { SpritelyError } from "../lib/errors";
 import {fixSprites} from "../cli/util";
+import { SpritelyBatch } from "../lib/SpritelyBatch";
 
 const sandboxRoot = "./sandbox";
 const samplesRoot = "./samples";
@@ -161,6 +162,16 @@ describe("Spritely", function(){
     new Spritely(sandboxPath(path.join('moved','subdir','subsubdir')));
     // Should get errors when trying to get the original sprite
     expect(()=>new Spritely(sandboxPath(path.join('dir','subdir','subsubdir')))).to.throw();
+  });
+
+  it("can create a SpritelyBatch instance",function(){
+    const spritelyBatch = new SpritelyBatch(sandboxPath());
+    expect(spritelyBatch.sprites.find(sprite=>sprite.name=='subsubdir'),
+      'should be able to discover nested sprites'
+    ).to.exist;
+    expect(spritelyBatch.sprites.length,
+      'should be able to find all sprites'
+    ).to.be.greaterThan(7);
   });
 
   after(function(){

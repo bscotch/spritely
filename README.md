@@ -159,10 +159,12 @@ and JSDocs, so you'll be able to figure out your options
 using the autocomplete features of Typescript/JSDoc-aware
 code editors like Visual Studio Code.
 
-#### Typescript
+#### Spritely Instances
 
 ```ts
-import {Spritely} from "@bscotch/spritely"
+import {Spritely} from "@bscotch/spritely";
+// or, for node/Javascript
+const {Spritely} = require("@bscotch/spritely");
 
 async function myPipeline(){
   const sprite = new Spritely('path/to/your/sprite/folder');
@@ -176,19 +178,17 @@ async function myPipeline(){
 }
 ```
 
-#### JavaScript
+#### SpritelyBatch Instances
 
-```js
-const {Spritely} = require("@bscotch/spritely");
+Pipelines likely require discovering many sprites instead of
+only pointing at one specific sprite. Spritely includes a
+`SpritelyBatch` class for discovering sprite folders and creating
+a collection of Spritely instances from them.
 
-async function myPipeline(){
-  const sprite = new Spritely('path/to/your/sprite/folder');
+```ts
+import {SpritelyBatch} from "@bscotch/spritely";
 
-  // use async/await syntax
-  await sprite.crop();
-  await sprite.alphaline();
-
-  // or use .then() syntax
-  sprite.crop().then(cropped=>cropped.alphaline());
-}
+const batch = new SpritelyBatch('path/to/your/sprite/storage/root');
+// Get a shallow copy of the list of created Spritely instances
+const sprites = batch.sprites;
 ```

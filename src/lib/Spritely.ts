@@ -56,9 +56,16 @@ export class Spritely {
   }
   get width(){ return this.subimageWidth; }
   get height(){ return this.subimageHeight; }
+
+  /** Subimage (frame) paths */
   get paths(){
     assert(this.subimagePaths.length,`Sprite ${this.name} has no subimages`);
     return [...this.subimagePaths];
+  }
+
+  /** Sprite (folder) path */
+  get path(){
+    return this.spriteRoot;
   }
 
   /**
