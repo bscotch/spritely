@@ -167,11 +167,12 @@ describe("Spritely", function(){
 
   it("can move a sprite", async function(){
     expect(()=>new Spritely(sandboxPath(path.join('dir','subdir','subsubdir')))).to.not.throw();
-    await fixSprites(['crop','alphaline'],{
+    const options = {
       folder: sandboxPath(path.join('dir')),
       move: sandboxPath('moved'),
       recursive: true
-    });
+    };
+    await fixSprites(['crop','alphaline'],options);
     // Should be able to load the sprite from where it was moved
     new Spritely(sandboxPath(path.join('moved','subdir','subsubdir')));
     // Should get errors when trying to get the original sprite

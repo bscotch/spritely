@@ -140,6 +140,10 @@ make sure you have backups!):
   This feature is useful for pipelines where the presence/absence of images
   is used as an indicator for progress through the pipeline, or for export tools that
   refuse to overwrite existing images.
++ `spritely fix -f enemy --move somewhere/else --purge-top-level-folders` will delete
+  top-level folders (immediate children of `--folder`) prior to moving changed images.
+  This is useful for ensuring that any sprites deleted from the source also don't appear
+  downstream.
 + `spritely fix -f enemy --root-images-are-sprites` causes any images directly in the root
   folder (`enemy`) to be treated as individual sprites, by putting each into their own
   folder. When used in combination with the `--recursive` flag, *only* the root-level images

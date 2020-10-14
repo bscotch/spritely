@@ -1,4 +1,4 @@
-import { listFilesByExtensionSync, listFoldersSync, oneline, toPosixPath } from "@bscotch/utility";
+import { listFilesByExtensionSync, listFoldersSync, listPathsSync, oneline, toPosixPath } from "@bscotch/utility";
 import commander from "commander";
 import { Spritely } from "../lib/Spritely";
 import path from "path";
@@ -8,9 +8,9 @@ export interface SpritelyCliGeneralOptions {
   folder: string,
   recursive?: boolean,
   move?: string,
-  rootImagesAreSprites?: boolean
+  rootImagesAreSprites?: boolean,
+  purgeTopLevelFolders?: boolean,
 }
-
 
 export function addGeneralOptions(cli: typeof commander){
   cli.option("-f --folder <path>", oneline`
@@ -30,6 +30,10 @@ export function addGeneralOptions(cli: typeof commander){
       of images as signals. Maintains relative paths.
       Deletes any existing subimages before copying the new
       ones over.
+    `)
+    .option("--purge-top-level-folders", oneline`
+      Delete top-level folders (immediate children of --folder)
+      prior to moving changed images.
     `)
     .option("-s --root-images-are-sprites", oneline`
       Prior to correction, move any immediate PNG children of
@@ -94,5 +98,20 @@ export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],op
     }
   }
   const spriteDirs = getSpriteDirs(options.folder,options.recursive);
+  if(options.purgeTopLevelFolders && options.move){
+    const topLevelDirs = [...new Set(spriteDirs.map(spriteDir=>{
+      return path.relative(options.folder,spriteDir).split(/[\\/]/g)[0];
+    }))].filter(x=>x);
+    for(const topLevelDir of topLevelDirs){
+      const moveDir = path.join(options.move,topLevelDir);
+      const childrenAreImagesOrFolders = listPathsSync(moveDir,true)
+        .every(child=>child.endsWith('.png') || fs.statSync(child).isDirectory());
+      if(!childrenAreImagesOrFolders){
+        continue;
+      }
+      fs.emptyDirSync(moveDir);
+      fs.rmdirSync(moveDir);
+    }
+  }
   await fixSpriteDirs(method,spriteDirs,options.folder,options.move);
 }
