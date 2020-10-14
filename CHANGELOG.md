@@ -1,3 +1,13 @@
+# [0.7.0](https://github.com/bscotch/spritely/compare/v0.6.0...v0.7.0) (2020-10-14)
+
+
+### Features
+
+* CLI commands now include an option to move root-level images into sprite folders. Closes [#6](https://github.com/bscotch/spritely/issues/6) ([b669c39](https://github.com/bscotch/spritely/commit/b669c3903082191210fed54a842682ef757d0af4))
+* The --watch option is no longer available for CLI commands. It's behavior was too fragile and it added too much complexity to be worth keeping around. ([e8664b2](https://github.com/bscotch/spritely/commit/e8664b2784e0dcee5d409433b19a70f77c40c77f))
+
+
+
 # [0.6.0](https://github.com/bscotch/spritely/compare/v0.5.0...v0.6.0) (2020-10-13)
 
 
