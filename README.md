@@ -140,6 +140,12 @@ make sure you have backups!):
   This feature is useful for pipelines where the presence/absence of images
   is used as an indicator for progress through the pipeline, or for export tools that
   refuse to overwrite existing images.
++ `spritely fix -f enemy --root-images-are-sprites` causes any images directly in the root
+  folder (`enemy`) to be treated as individual sprites, by putting each into their own
+  folder. When used in combination with the `--recursive` flag, *only* the root-level images
+  are treated this way (all others are treated as normal). This is useful for cases where
+  sprites containing only one image are not exported by your drawing software into a folder,
+  but only as a single image.
 
 ### Programmatic Usage
 

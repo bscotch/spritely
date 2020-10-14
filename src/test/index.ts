@@ -151,12 +151,26 @@ describe("Spritely", function(){
     expect(startingChecksums).to.not.eql(endingChecksums);
   });
 
+  it("CLI commands can move root images into sprite folders",async function(){
+    const folder = sandboxPath('dir');
+    await fixSprites('crop',{folder,recursive:true,rootImagesAreSprites:true});
+    expect(fs.existsSync(path.join(folder,'invalid-1.png')),
+      'root images should no longer exist'
+    ).to.be.false;
+    expect(fs.existsSync(path.join(folder,'invalid-1','invalid-1.png')),
+      'root images be moved into subfolder'
+    ).to.be.true;
+    expect(fs.existsSync(path.join(folder,'subdir','subsubdir','subimage-1.png')),
+      'non-root images should be handled normally'
+    ).to.be.true;
+  });
+
   it("can move a sprite", async function(){
     expect(()=>new Spritely(sandboxPath(path.join('dir','subdir','subsubdir')))).to.not.throw();
     await fixSprites(['crop','alphaline'],{
       folder: sandboxPath(path.join('dir')),
       move: sandboxPath('moved'),
-      recursive:true
+      recursive: true
     });
     // Should be able to load the sprite from where it was moved
     new Spritely(sandboxPath(path.join('moved','subdir','subsubdir')));

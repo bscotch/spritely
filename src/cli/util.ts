@@ -8,6 +8,7 @@ export interface SpritelyCliGeneralOptions {
   folder: string,
   recursive?: boolean,
   move?: string,
+  rootImagesAreSprites?: boolean
 }
 
 
@@ -29,13 +30,13 @@ export function addGeneralOptions(cli: typeof commander){
       of images as signals. Maintains relative paths.
       Deletes any existing subimages before copying the new
       ones over.
+    `)
+    .option("-s --root-images-are-sprites", oneline`
+      Prior to correction, move any immediate PNG children of
+      --folder into folders with the same name as those images.
+      This allows root-level images to be treated as individual
+      sprites.
     `);
-    // .option("-s --root-images-are-sprites", oneline`
-    //   Prior to correction, move any immediate PNG children of
-    //   --folder into folders with the same name as those images.
-    //   This allows root-level images to be treated as individual
-    //   sprites.
-    // `);
   return cli;
 }
 
@@ -81,7 +82,17 @@ async function fixSpriteDirs(method:SpritelyFixMethod|SpritelyFixMethod[],sprite
 
 
 export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],options: SpritelyCliGeneralOptions){
-  // Get all directories starting in folder
+  if(options.rootImagesAreSprites){
+    // Find any root-level PNGs and move them into a folder by the same name
+    const rootImages = listFilesByExtensionSync(options.folder,'png',false);
+    for(const rootImage of rootImages){
+      const name = path.parse(rootImage).name;
+      const newFolder = path.join(options.folder,name);
+      const newPath = path.join(newFolder,`${name}.png`);
+      await fs.ensureDir(newFolder);
+      await fs.move(rootImage,newPath);
+    }
+  }
   const spriteDirs = getSpriteDirs(options.folder,options.recursive);
   await fixSpriteDirs(method,spriteDirs,options.folder,options.move);
 }
