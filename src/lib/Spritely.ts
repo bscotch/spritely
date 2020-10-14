@@ -140,8 +140,6 @@ export class Spritely {
   async copy(destinationFolder:string){
     const toSpriteFolder = path.join(destinationFolder,this.name);
     await fs.ensureDir(toSpriteFolder);
-    // Move things synchronously to make sure no watchers etc will trigger
-    // in the middle of the process.
     const newPaths: string[] = [];
     for(const subimagePath of this.paths){
       const newPath = path.join(toSpriteFolder,path.basename(subimagePath));

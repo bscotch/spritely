@@ -2,13 +2,11 @@ import { listFilesByExtensionSync, listFoldersSync, oneline, toPosixPath } from 
 import commander from "commander";
 import { Spritely } from "../lib/Spritely";
 import path from "path";
-import chokidar from "chokidar";
 import fs from "fs-extra";
 
 export interface SpritelyCliGeneralOptions {
   folder: string,
   recursive?: boolean,
-  watch?: boolean,
   move?: string,
 }
 
@@ -19,25 +17,25 @@ export function addGeneralOptions(cli: typeof commander){
       immediate PNG children of each folder are treated as subimages.
       Defaults to the current working directory.
     `, process.cwd())
-    .option("-r --recursive",oneline`
+    .option("-r --recursive", oneline`
       Treat --folder, and all folders inside --folder (recursively), as sprites.
       USE WITH CAUTION!
       Each folder with immediate PNG children is treated as a sprite,
       with those children as its subimages.
     `)
-    .option("-w --watch",oneline`
-      After running once, stay alive and watch for changes in the
-      target files. If any change, re-run the operation on them.
-      Allows you to run the command once and then have your images
-      automatically modified as you create/update them.
-    `)
-    .option("-m --move <path>",oneline`
+    .option("-m --move <path>", oneline`
       Move images to a different folder after modification.
       Useful for pipelines that use presence/absence
       of images as signals. Maintains relative paths.
       Deletes any existing subimages before copying the new
       ones over.
     `);
+    // .option("-s --root-images-are-sprites", oneline`
+    //   Prior to correction, move any immediate PNG children of
+    //   --folder into folders with the same name as those images.
+    //   This allows root-level images to be treated as individual
+    //   sprites.
+    // `);
   return cli;
 }
 
@@ -86,18 +84,4 @@ export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],op
   // Get all directories starting in folder
   const spriteDirs = getSpriteDirs(options.folder,options.recursive);
   await fixSpriteDirs(method,spriteDirs,options.folder,options.move);
-
-  if(options.watch){
-    const glob = toPosixPath(
-      options.recursive
-        ? path.join(options.folder,'**/*.png')
-        : path.join(options.folder,'*.png')
-    );
-    const rerunOnDir = (filepath:string)=>fixSpriteDir(method,path.dirname(filepath),options.folder,options.move);
-    chokidar
-      .watch(glob,{ignoreInitial:true})
-      .on("ready",()=>console.log(`Watching for sprite changes matching pattern: ${glob}`))
-      .on('add',rerunOnDir)
-      .on('change',rerunOnDir);
-  }
 }
