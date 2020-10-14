@@ -1,3 +1,12 @@
+# [0.8.0](https://github.com/bscotch/spritely/compare/v0.7.0...v0.8.0) (2020-10-14)
+
+
+### Features
+
+* CLI commands now include the option to purge top-level folders prior to moving modified images. Closes [#9](https://github.com/bscotch/spritely/issues/9) ([223d799](https://github.com/bscotch/spritely/commit/223d799da6cbb3cfa35e0e0923412c77eafd84b1))
+
+
+
 # [0.7.0](https://github.com/bscotch/spritely/compare/v0.6.0...v0.7.0) (2020-10-14)
 
 
