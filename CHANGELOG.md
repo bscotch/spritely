@@ -1,3 +1,12 @@
+# [0.9.0](https://github.com/bscotch/spritely/compare/v0.8.2...v0.9.0) (2020-10-15)
+
+
+### Features
+
+* CLI commands now include the if-match option to only perform tasks on sprites matching a search filter. ([227be13](https://github.com/bscotch/spritely/commit/227be13651ae190a1fb0c3ba43e8cb89f5855a33))
+
+
+
 ## [0.8.2](https://github.com/bscotch/spritely/compare/v0.8.1...v0.8.2) (2020-10-15)
 
 
