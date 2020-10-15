@@ -20,12 +20,12 @@ function resetSandbox() {
   fs.copySync(samplesRoot, sandboxRoot);
 }
 
-function samplesPath(subPath?:string){
-  return path.join(samplesRoot,subPath||'');
+function samplesPath(...subPathParts:string[]){
+  return path.join(samplesRoot,...(subPathParts||[]));
 }
 
-function sandboxPath(subPath?:string){
-  return path.join(sandboxRoot,subPath||'');
+function sandboxPath(...subPathParts:string[]){
+  return path.join(sandboxRoot,...(subPathParts||[]));
 }
 
 describe("Spritely", function(){
@@ -46,13 +46,13 @@ describe("Spritely", function(){
 
   it("can test if images are equal",async function(){
     const shouldBeEqual = await Spritely.imagesAreEqual(
-      sandboxPath(path.join('reference','pearl.png')),
-      sandboxPath(path.join('reference','pearl.png'))
+      sandboxPath('reference','pearl.png'),
+      sandboxPath('reference','pearl.png')
     );
     expect(shouldBeEqual,'identical images should show up as equal').to.be.true;
     const shouldBeUnequal = await Spritely.imagesAreEqual(
-      sandboxPath(path.join('reference','pearl.png')),
-      sandboxPath(path.join('invalid-subimages','subimage-1.png'))
+      sandboxPath('reference','pearl.png'),
+      sandboxPath('invalid-subimages','subimage-1.png')
     );
     expect(shouldBeUnequal,'different images should show up as unequal').to.be.false;
   });
@@ -77,8 +77,8 @@ describe("Spritely", function(){
   it("cropped image matches expected image",async function(){
     const sprite = new Spritely(sandboxPath('reference'));
     const uncroppedEqualsReference = await Spritely.imagesAreEqual(
-      sandboxPath(path.join('reference','pearl.png')),
-      samplesPath(path.join('cropped','pearl.png'))
+      sandboxPath('reference','pearl.png'),
+      samplesPath('cropped','pearl.png')
     );
     expect(uncroppedEqualsReference,
       'uncropped should not match cropped'
@@ -86,8 +86,8 @@ describe("Spritely", function(){
 
     await sprite.crop();
     const croppedEqualsReference = await Spritely.imagesAreEqual(
-      sandboxPath(path.join('reference','pearl.png')),
-      samplesPath(path.join('cropped','pearl.png'))
+      sandboxPath('reference','pearl.png'),
+      samplesPath('cropped','pearl.png')
     );
     expect(croppedEqualsReference,
       'cropped should match reference'
@@ -99,8 +99,8 @@ describe("Spritely", function(){
     await sprite.crop();
     await sprite.crop();
     const croppedEqualsReference = await Spritely.imagesAreEqual(
-      sandboxPath(path.join('reference','pearl.png')),
-      samplesPath(path.join('cropped','pearl.png'))
+      sandboxPath('reference','pearl.png'),
+      samplesPath('cropped','pearl.png')
     );
     expect(croppedEqualsReference,
       'twice-cropped should match reference'
@@ -110,8 +110,8 @@ describe("Spritely", function(){
   it("alphalined image matches expected image",async function(){
     const sprite = new Spritely(sandboxPath('reference'));
     const uncorrectedEqualsReference = await Spritely.imagesAreEqual(
-      sandboxPath(path.join('reference','pearl.png')),
-      samplesPath(path.join('alphalined','pearl.png'))
+      sandboxPath('reference','pearl.png'),
+      samplesPath('alphalined','pearl.png')
     );
     expect(uncorrectedEqualsReference,
       'unalphalined should not match alphalined'
@@ -119,8 +119,8 @@ describe("Spritely", function(){
 
     await sprite.alphaline();
     const correctedEqualsReference = await Spritely.imagesAreEqual(
-      sandboxPath(path.join('reference','pearl.png')),
-      samplesPath(path.join('alphalined','pearl.png'))
+      sandboxPath('reference','pearl.png'),
+      samplesPath('alphalined','pearl.png')
     );
     expect(correctedEqualsReference,
       'alphalined should match reference'
@@ -132,8 +132,8 @@ describe("Spritely", function(){
     await sprite.alphaline();
     await sprite.alphaline();
     const alphalinedEqualsReference = await Spritely.imagesAreEqual(
-      sandboxPath(path.join('reference','pearl.png')),
-      samplesPath(path.join('alphalined','pearl.png'))
+      sandboxPath('reference','pearl.png'),
+      samplesPath('alphalined','pearl.png')
     );
     expect(alphalinedEqualsReference,
       'twice-alphalined should match reference'
@@ -142,7 +142,7 @@ describe("Spritely", function(){
 
   it("CLI commands can recurse through nested folders",async function(){
     const getChecksums = ()=>{
-      return new Spritely(sandboxPath(path.join('dir','subdir','subsubdir'))).checksums;
+      return new Spritely(sandboxPath('dir','subdir','subsubdir')).checksums;
     };
     const startingChecksums = await getChecksums();
     expect(startingChecksums.length,'should be starting with two images').to.equal(2);
@@ -166,18 +166,38 @@ describe("Spritely", function(){
   });
 
   it("can move a sprite", async function(){
-    expect(()=>new Spritely(sandboxPath(path.join('dir','subdir','subsubdir')))).to.not.throw();
+    expect(()=>new Spritely(sandboxPath('dir','subdir','subsubdir'))).to.not.throw();
     const options = {
-      folder: sandboxPath(path.join('dir')),
+      folder: sandboxPath('dir'),
       move: sandboxPath('moved'),
       recursive: true,
       purgeTopLevelFolders: true,
     };
     await fixSprites(['crop','alphaline'],options);
     // Should be able to load the sprite from where it was moved
-    new Spritely(sandboxPath(path.join('moved','subdir','subsubdir')));
+    new Spritely(sandboxPath('moved','subdir','subsubdir'));
     // Should get errors when trying to get the original sprite
-    expect(()=>new Spritely(sandboxPath(path.join('dir','subdir','subsubdir')))).to.throw();
+    expect(()=>new Spritely(sandboxPath('dir','subdir','subsubdir'))).to.throw();
+  });
+
+  it("can filter which sprites are modified", async function(){
+    const options = {
+      folder: sandboxPath(),
+      move: sandboxPath('filtered'),
+      recursive: true,
+      ifMatch: "(cropped|tile_)"
+    };
+    await fixSprites('crop',options);
+    for(const shouldBeFixed of ['cropped','tile_grass','tile_water']){
+      expect(fs.existsSync(sandboxPath('filtered',shouldBeFixed)),
+        'folders matching patterns should be moved'
+      ).to.be.true;
+    }
+    for(const shouldNotBeFixed of ['alphalined','reference','stick','valid-subimages']){
+      expect(fs.existsSync(sandboxPath('filtered',shouldNotBeFixed)),
+        'folders not matching patterns should not be moved'
+      ).to.be.false;
+    }
   });
 
   it("can create a SpritelyBatch instance",function(){

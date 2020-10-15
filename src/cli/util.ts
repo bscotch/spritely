@@ -16,6 +16,7 @@ export interface SpritelyCliGeneralOptions {
   move?: string,
   rootImagesAreSprites?: boolean,
   purgeTopLevelFolders?: boolean,
+  ifMatch?: string,
 }
 
 export function addGeneralOptions(cli: typeof commander){
@@ -46,6 +47,11 @@ export function addGeneralOptions(cli: typeof commander){
       --folder into folders with the same name as those images.
       This allows root-level images to be treated as individual
       sprites.
+    `)
+    .option("-p --if-match", oneline`
+      Only perform the tasks on sprites whose top-level folder
+      (relative to --folder) match this pattern. Case-sensitive,
+      converted to a regex pattern using JavaScript's 'new RegExp()'.
     `);
   return cli;
 }
@@ -90,6 +96,10 @@ async function fixSpriteDirs(method:SpritelyFixMethod|SpritelyFixMethod[],sprite
   }
 }
 
+function rootDir(fullpath:string,relativeTo='.'){
+  return path.relative(relativeTo,fullpath).split(/[\\/]/g)[0];
+}
+
 
 export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],options: SpritelyCliGeneralOptions){
   if(options.rootImagesAreSprites){
@@ -103,11 +113,18 @@ export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],op
       await fs.move(rootImage,newPath);
     }
   }
-  const spriteDirs = getSpriteDirs(options.folder,options.recursive);
+  const ifMatch = options.ifMatch ? new RegExp(options.ifMatch) : null;
+  const spriteDirs = getSpriteDirs(options.folder,options.recursive)
+    .filter(spriteDir=>{
+      const topLevelDir = rootDir(spriteDir,options.folder);
+      if(!topLevelDir){ return false; }
+      if(!ifMatch){ return true; }
+      return topLevelDir.match(ifMatch);
+    });
   if(options.purgeTopLevelFolders && options.move){
-    const topLevelDirs = [...new Set(spriteDirs.map(spriteDir=>{
-      return path.relative(options.folder,spriteDir).split(/[\\/]/g)[0];
-    }))].filter(x=>x);
+    const topLevelDirs = [
+      ...new Set(spriteDirs.map(spriteDir=>rootDir(spriteDir,options.folder)))
+    ].filter(x=>x);
     for(const topLevelDir of topLevelDirs){
       const moveDir = path.join(options.move,topLevelDir);
       if(! await fs.existsSync(moveDir)){

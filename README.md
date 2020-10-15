@@ -150,6 +150,15 @@ make sure you have backups!):
   are treated this way (all others are treated as normal). This is useful for cases where
   sprites containing only one image are not exported by your drawing software into a folder,
   but only as a single image.
++ `spritely fix -r -f folder/with/all/your/sprites/ --if-match pattern` recursively
+  looks at all the sprites in the `folder/with/all/your/sprites/` and performs the
+  tasks *only if* the pattern you provided with `--if-match` matches the top-level
+  directory. Patterns are case-sensitive and are converted to regex with
+  the JavaScript `new RegExp()`
+  constructor. If you don't know what that means, don't worry, it'll still behave
+  the way you expect most of the time. For example, with pattern `hello` you'd match
+  `folder/with/all/your/sprites/helloworld` and `folder/with/all/your/sprites/ohhello`,
+  but would not match `folder/with/all/your/sprites/different_top_level/hello`.
 
 ### Programmatic Usage
 
