@@ -170,7 +170,8 @@ describe("Spritely", function(){
     const options = {
       folder: sandboxPath(path.join('dir')),
       move: sandboxPath('moved'),
-      recursive: true
+      recursive: true,
+      purgeTopLevelFolders: true,
     };
     await fixSprites(['crop','alphaline'],options);
     // Should be able to load the sprite from where it was moved

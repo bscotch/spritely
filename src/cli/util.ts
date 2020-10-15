@@ -76,7 +76,6 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
       }
       catch{}
       await sprite.move(path.dirname(movedSpritePath));
-      removeEmptyDirsSync(spriteDir);
     }
     console.log(`Cleaned sprite "${spriteDir}"`);
   }
@@ -111,6 +110,9 @@ export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],op
     }))].filter(x=>x);
     for(const topLevelDir of topLevelDirs){
       const moveDir = path.join(options.move,topLevelDir);
+      if(! await fs.existsSync(moveDir)){
+        continue;
+      }
       const childrenAreImagesOrFolders = listPathsSync(moveDir,true)
         .every(child=>child.endsWith('.png') || fs.statSync(child).isDirectory());
       if(!childrenAreImagesOrFolders){
