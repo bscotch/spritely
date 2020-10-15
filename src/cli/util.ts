@@ -1,4 +1,10 @@
-import { listFilesByExtensionSync, listFoldersSync, listPathsSync, oneline, toPosixPath } from "@bscotch/utility";
+import {
+  listFilesByExtensionSync,
+  listFoldersSync,
+  listPathsSync,
+  oneline,
+  removeEmptyDirsSync,
+} from "@bscotch/utility";
 import commander from "commander";
 import { Spritely } from "../lib/Spritely";
 import path from "path";
@@ -70,6 +76,7 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
       }
       catch{}
       await sprite.move(path.dirname(movedSpritePath));
+      removeEmptyDirsSync(spriteDir);
     }
     console.log(`Cleaned sprite "${spriteDir}"`);
   }
@@ -114,4 +121,7 @@ export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],op
     }
   }
   await fixSpriteDirs(method,spriteDirs,options.folder,options.move);
+  if(options.move){
+    removeEmptyDirsSync(options.folder);
+  }
 }
