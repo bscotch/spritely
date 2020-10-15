@@ -1,3 +1,12 @@
+## [0.8.2](https://github.com/bscotch/spritely/compare/v0.8.1...v0.8.2) (2020-10-15)
+
+
+### Bug Fixes
+
+* Purging top level folders no longer crashes when those folders don't exist in the move target. ([0bfe821](https://github.com/bscotch/spritely/commit/0bfe821075d7c4fe24e464b4316c4dac632bfcf1))
+
+
+
 ## [0.8.1](https://github.com/bscotch/spritely/compare/v0.8.0...v0.8.1) (2020-10-15)
 
 
