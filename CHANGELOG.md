@@ -1,3 +1,12 @@
+# [1.0.0](https://github.com/bscotch/spritely/compare/v0.9.0...v1.0.0) (2020-10-16)
+
+
+### Features
+
+* 'Alphaline' is now rnamed to 'bleed' in all contexts to match industry terminology. Breaking change. ([1bfa8ed](https://github.com/bscotch/spritely/commit/1bfa8ed8024c7217e7a44a64b368fcb028a6e0f8))
+
+
+
 # [0.9.0](https://github.com/bscotch/spritely/compare/v0.8.2...v0.9.0) (2020-10-15)
 
 
