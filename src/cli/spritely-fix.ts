@@ -6,7 +6,7 @@ async function runCliCommand(){
   addGeneralOptions(cli.description('Spritely: Fix (run all corrective functions)'))
     .parse();
 
-  await fixSprites(['crop','alphaline'],cli as typeof cli & SpritelyCliGeneralOptions);
+  await fixSprites(['crop','bleed'],cli as typeof cli & SpritelyCliGeneralOptions);
 }
 
 runCliCommand();

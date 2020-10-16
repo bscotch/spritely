@@ -20,7 +20,7 @@ project, solving a few key problems:
 + Edge interpolation artifacts (faint outlines around rendered sprites)
 + Excessive padding (increases compiling time)
 
-### Edge interpolation artifacts
+### Bleed: Remove edge interpolation artifacts
 
 You may notice some border artifacts around your sprites, especially when the camera
 is not positioned in a pixel-perfect way (e.g. in GMS when the
@@ -40,13 +40,14 @@ cases, but much more pronounced with subpixel camera positioning.*
 
 Spritely identifies the edge pixels and creates a border around them that is the
 same color and mostly transparent, so that interpolation will not so dramatically
-impact the edges of your images. We call this "<dfn>Alphalining</dfn>" (like
-"outlining", but with a nearly-invisible line).
+impact the edges of your images. This process goes by various names and may already
+be available in your art creation tools. In Spine it's called "Bleed", in
+other contexts you might see it as flood-filling or edge-padding.
 
 Note that you shouldn't be able to tell the difference *by eye* between
-the original image and an alphalined image.
+the original image and a bled image.
 
-### Excessive padding
+### Crop: Remove excessive padding
 
 It's likely that your subimages consist of something meaningful drawn inside a
 transparent rectangle. Excessive padding around the meaningful content adds more
@@ -131,8 +132,8 @@ make sure you have backups!):
 + `spritely crop --recursive -f enemy` will find all nested folders, treating each as a sprite, so that `enemy/leg/leg-stand.png` and `enemy/leg/leg-walk.png` will also be cropped. **Use with caution!**
 + `spritely crop -r -f enemy` is shorthand for the same thing
 + `spritely crop -f "C:\User\Me\Desktop\enemy"` provides an *absolute* path if you are not currently in the parent folder of the `enemy` folder.
-+ `spritely alphaline -f enemy` outlines the important parts of `enemy/enemy-idle.png` and `enemy/enemy-run.png` with nearly-transparent pixels to improve interpolation for subpixel camera positioning.
-+ `spritely fix -f enemy` crops and alphalines the `enemy` sprite.
++ `spritely bleed -f enemy` outlines the important parts of `enemy/enemy-idle.png` and `enemy/enemy-run.png` with nearly-transparent pixels to improve interpolation for subpixel camera positioning.
++ `spritely fix -f enemy` crops and bleed the `enemy` sprite.
 + `spritely fix -f enemy --move somewhere/else` moves the sprite to `somewhere/else` after
   it has been processed. Also works recursively, with path provided to `--move` being used
   as the root directory. Note that old subimages in the target directory **are deleted** prior
@@ -182,10 +183,10 @@ async function myPipeline(){
 
   // use async/await syntax
   await sprite.crop();
-  await sprite.alphaline();
+  await sprite.bleed();
 
   // or use .then() syntax
-  sprite.crop().then(cropped=>cropped.alphaline());
+  sprite.crop().then(cropped=>cropped.bleed());
 }
 ```
 

@@ -70,7 +70,7 @@ describe("Spritely", function(){
     const spriteNames = ['stick','tile_water','tile_grass'];
     for(const spriteName of spriteNames){
       const sprite = new Spritely(sandboxPath(spriteName));
-      await sprite.alphaline();
+      await sprite.bleed();
     }
   });
 
@@ -107,36 +107,36 @@ describe("Spritely", function(){
     ).to.be.true;
   });
 
-  it("alphalined image matches expected image",async function(){
+  it("bled image matches expected image",async function(){
     const sprite = new Spritely(sandboxPath('reference'));
     const uncorrectedEqualsReference = await Spritely.imagesAreEqual(
       sandboxPath('reference','pearl.png'),
-      samplesPath('alphalined','pearl.png')
+      samplesPath('bled','pearl.png')
     );
     expect(uncorrectedEqualsReference,
-      'unalphalined should not match alphalined'
+      'unbled should not match bled'
     ).to.be.false;
 
-    await sprite.alphaline();
+    await sprite.bleed();
     const correctedEqualsReference = await Spritely.imagesAreEqual(
       sandboxPath('reference','pearl.png'),
-      samplesPath('alphalined','pearl.png')
+      samplesPath('bled','pearl.png')
     );
     expect(correctedEqualsReference,
-      'alphalined should match reference'
+      'bled should match reference'
     ).to.be.true;
   });
 
-  it("twice-alphalined should match once-alphalined",async function(){
+  it("twice-bled should match once-bled",async function(){
     const sprite = new Spritely(sandboxPath('reference'));
-    await sprite.alphaline();
-    await sprite.alphaline();
-    const alphalinedEqualsReference = await Spritely.imagesAreEqual(
+    await sprite.bleed();
+    await sprite.bleed();
+    const bledEqualsReference = await Spritely.imagesAreEqual(
       sandboxPath('reference','pearl.png'),
-      samplesPath('alphalined','pearl.png')
+      samplesPath('bled','pearl.png')
     );
-    expect(alphalinedEqualsReference,
-      'twice-alphalined should match reference'
+    expect(bledEqualsReference,
+      'twice-bled should match reference'
     ).to.be.true;
   });
 
@@ -173,7 +173,7 @@ describe("Spritely", function(){
       recursive: true,
       purgeTopLevelFolders: true,
     };
-    await fixSprites(['crop','alphaline'],options);
+    await fixSprites(['crop','bleed'],options);
     // Should be able to load the sprite from where it was moved
     new Spritely(sandboxPath('moved','subdir','subsubdir'));
     // Should get errors when trying to get the original sprite
@@ -193,7 +193,7 @@ describe("Spritely", function(){
         'folders matching patterns should be moved'
       ).to.be.true;
     }
-    for(const shouldNotBeFixed of ['alphalined','reference','stick','valid-subimages']){
+    for(const shouldNotBeFixed of ['bled','reference','stick','valid-subimages']){
       expect(fs.existsSync(sandboxPath('filtered',shouldNotBeFixed)),
         'folders not matching patterns should not be moved'
       ).to.be.false;

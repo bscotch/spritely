@@ -64,7 +64,7 @@ export function getSpriteDirs(folder:string,recursive?:boolean){
   return folders;
 }
 
-type SpritelyFixMethod = 'crop'|'alphaline';
+type SpritelyFixMethod = 'crop'|'bleed';
 
 async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDir:string,sourceRoot:string,moveRoot?:string){
   const methods = typeof method == 'string' ? [method] : method;

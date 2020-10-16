@@ -131,8 +131,8 @@ export class Spritely {
   }
 
   /** Correct aliasing issues */
-  async alphaline(){
-    await Promise.all(this.paths.map(path=>Spritely.alphaline(path)));
+  async bleed(){
+    await Promise.all(this.paths.map(path=>Spritely.bleed(path)));
     return this;
   }
 
@@ -229,11 +229,11 @@ export class Spritely {
     return path.join(dir,`${name}-${postfix}${ext}`);
   }
 
-  static async alphaline(imagePath:string,options?:SpriteEdgeCorrectionOptions){
+  static async bleed(imagePath:string,options?:SpriteEdgeCorrectionOptions){
     const img = await Image.load(imagePath) as ImageExt;
     assert(img.alpha,'Images must have an alpha channel to be corrected.');
     const maxPixelValue = Math.pow(2,img.bitDepth);
-    const alphalineMaxValue = Math.ceil(0.02 * maxPixelValue);
+    const bleedMaxAlpha = Math.ceil(0.02 * maxPixelValue);
     const alphaChannel = img.channels-1;
     const nonAlphaChannels = [...Array(img.channels-1)].map((v,i)=>i);
     const transparentBlackPixel = [...Array(img.channels)].map(()=>0);
@@ -251,7 +251,7 @@ export class Spritely {
     // Invert to get the background pixels that need to be adjusted
     // Set the color of those pixels to the the color of the nearest foreground, and the alpha
     // to something very low so that it mostly isn't visible but won't be treated as background downstream
-    const foreground = Spritely.getForegroundMask(img,(alphalineMaxValue+1)/maxPixelValue);
+    const foreground = Spritely.getForegroundMask(img,(bleedMaxAlpha+1)/maxPixelValue);
     const expandedForeground = foreground
       .dilate({kernel:[ [ 1, 1, 1 ] , [ 1, 1, 1 ] , [ 1, 1, 1 ] ]}) as ImageExt;
 
@@ -287,7 +287,7 @@ export class Spritely {
               if(idx==img.channels-1){
                 // Alpha should be 2% or half the min neighboring alpha
                 const minAlpha = sample.reduce((min,value)=>Math.min(min,value),Infinity);
-                return Math.ceil(Math.min(minAlpha * 0.5,alphalineMaxValue));
+                return Math.ceil(Math.min(minAlpha * 0.5,bleedMaxAlpha));
               }
               else{
                 // Use the average color
