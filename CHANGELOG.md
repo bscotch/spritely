@@ -1,3 +1,12 @@
+# [1.1.0](https://github.com/bscotch/spritely/compare/v1.0.0...v1.1.0) (2020-10-16)
+
+
+### Features
+
+* Thrown errors are now logged prior to crashing Spritely, so that error data is not lost when pipelines complete. ([35523bd](https://github.com/bscotch/spritely/commit/35523bd50e07020c56ba7e78c99bc5f7db83b02a))
+
+
+
 # [1.0.0](https://github.com/bscotch/spritely/compare/v0.9.0...v1.0.0) (2020-10-16)
 
 
