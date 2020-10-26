@@ -1,3 +1,12 @@
+## [1.1.2](https://github.com/bscotch/spritely/compare/v1.1.1...v1.1.2) (2020-10-26)
+
+
+### Bug Fixes
+
+* The now-unused 'chokidar' is no longer a dependency. ([0663120](https://github.com/bscotch/spritely/commit/06631200bec643de2b0fb8a38e83ea0425c99e95))
+
+
+
 ## [1.1.1](https://github.com/bscotch/spritely/compare/v1.1.0...v1.1.1) (2020-10-16)
 
 
