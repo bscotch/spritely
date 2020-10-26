@@ -44,7 +44,6 @@
   "homepage": "https://github.com/bscotch/spritely",
   "dependencies": {
     "@bscotch/utility": "^0.5.1",
-    "chokidar": "^3.4.2",
     "commander": "^6.1.0",
     "fs-extra": "^9.0.1",
     "image-js": "^0.28.0",

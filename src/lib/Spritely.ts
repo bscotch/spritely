@@ -155,7 +155,7 @@ export class Spritely {
    */
   async delete(){
     for(const subimagePath of this.paths){
-      fs.removeSync(subimagePath);
+      await fs.remove(subimagePath);
     }
     // Attempt to remove the folders (and clean recursively)
     removeEmptyDirsSync(this.spriteRoot);
