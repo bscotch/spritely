@@ -15,7 +15,6 @@ import {removeEmptyDirsSync} from "@bscotch/utility";
 // but is needed since Typescript constructors are synchronous.
 import {imageSize} from "image-size";
 import { sha256 } from "./utility";
-import { option } from "commander";
 
 export type SpriteCreatedBy = 'inkscape'|'clipstudiopaint';
 export interface SpriteEdgeCorrectionOptions {
@@ -32,15 +31,27 @@ interface ImageExt extends Image {
 }
 
 interface SpritelyOptions {
-  spriteDirectory?: string
+  /** The location of the folder corresponding to the sprite. */
+  spriteDirectory?: string,
+  /**
+   * By default all sprite images inside `spriteDirectory`
+   * must be the same size. This allows the subimages to work
+   * out of the gate with GameMaker Studio, and also makes it
+   * easy to take all subimages into account for auto-cropping.
+   * If you bypass this requirement auto-cropping will be performed
+   * on a per-image basis, making relative position changes
+   * unpredicatable.
+   */
+  allowSubimageSizeMismatch?: boolean,
 }
 
 export class Spritely {
 
   private spriteRoot: string;
   private subimagePaths: string[];
-  private subimageWidth: number;
-  private subimageHeight: number;
+  private subimageWidth: number|undefined;
+  private subimageHeight: number|undefined;
+  readonly allowSubimageSizeMismatch:boolean = false;
 
   /**
    * Create a Sprite instance using a folder full of sprite subimages.
@@ -51,9 +62,12 @@ export class Spritely {
       ? options
       : options?.spriteDirectory || process.cwd();
     assertDirectoryExists(this.spriteRoot);
+    if(typeof options != 'string'){
+      this.allowSubimageSizeMismatch = Boolean(options?.allowSubimageSizeMismatch);
+    }
 
     this.subimagePaths = Spritely.getSubimages(this.spriteRoot);
-    const {width,height} = Spritely.getSubimagesSizeSync(this.subimagePaths);
+    const {width,height} = Spritely.getSubimagesSizeSync(this.subimagePaths,this.allowSubimageSizeMismatch);
     this.subimageWidth = width;
     this.subimageHeight = height;
   }
@@ -114,27 +128,22 @@ export class Spritely {
     await Promise.all(this.paths.map(async path=>{
       // Create a foreground mask and find its bounds
       const img = await Image.load(path) as ImageExt;
-      const subimageBoundingBox = Spritely.getForegroundBounds(img);
+      const subimageBoundingBox = Spritely.getForegroundBounds(img,extraPadding);
+      if(this.allowSubimageSizeMismatch){
+        // Then only need to crop based on self
+        await img.crop(Spritely.cropObjectFromBoundingBox(subimageBoundingBox)).save(path);
+        return;
+      }
       boundingBox.left   = Math.min(boundingBox.left  ,subimageBoundingBox.left  );
       boundingBox.top    = Math.min(boundingBox.top   ,subimageBoundingBox.top   );
       boundingBox.right  = Math.max(boundingBox.right ,subimageBoundingBox.right );
       boundingBox.bottom = Math.max(boundingBox.bottom,subimageBoundingBox.bottom);
     }));
-    // Add the additional padding
-    boundingBox.top    = Math.max(boundingBox.top    - extraPadding,0);
-    boundingBox.left   = Math.max(boundingBox.left   - extraPadding,0);
-    boundingBox.right  = Math.min(boundingBox.right  + extraPadding,this.width -1);
-    boundingBox.bottom = Math.min(boundingBox.bottom + extraPadding,this.height-1);
-    const cropObject = {
-      x: boundingBox.left,
-      y: boundingBox.top,
-      width:  boundingBox.right  - boundingBox.left + 1,
-      height: boundingBox.bottom - boundingBox.top + 1
-    };
-    await Promise.all(this.paths.map(async path=>{
-      const img = await Image.load(path) as ImageExt;
-      await img.crop(cropObject).save(path);
-    }));
+    if(!this.allowSubimageSizeMismatch){
+      // Then crop all images based on the collective bounding box.
+      const cropObject = Spritely.cropObjectFromBoundingBox(boundingBox);
+      await Promise.all(this.paths.map(path=>Spritely.cropImage(path,cropObject)));
+    }
     return this;
   }
 
@@ -195,11 +204,14 @@ export class Spritely {
    * subimages. Throw an error if any subimage is a different size than the others.
    * @param path A folder containing subimages, or an array of subimage paths
    */
-  static getSubimagesSizeSync(path:string|string[]){
+  static getSubimagesSizeSync(path:string|string[],allowSizeMismatch=false){
     const subimages = Array.isArray(path)
       ? path
       : Spritely.getSubimages(path);
     assertNonEmptyArray(subimages,`No subimages found.`);
+    if(allowSizeMismatch){
+      return {height:undefined,width:undefined};
+    }
     const expectedSize = Spritely.getImageSizeSync(subimages[0]);
     subimages.forEach(subimage=>{
       const {width,height} = Spritely.getImageSizeSync(subimage);
@@ -310,6 +322,21 @@ export class Spritely {
     await img.save(imagePath);
   }
 
+  private static cropObjectFromBoundingBox(boundingBox:{left:number,top:number,right:number,bottom:number}){
+    return {
+      x: boundingBox.left,
+      y: boundingBox.top,
+      width:  boundingBox.right  - boundingBox.left + 1,
+      height: boundingBox.bottom - boundingBox.top + 1
+    };
+  }
+
+  /** Crop an image in-place. */
+  private static async cropImage(imagePath:string,cropObject:{x:number,y:number,width:number,height:number}){
+    const img = await Image.load(imagePath) as ImageExt;
+    await img.crop(cropObject).save(imagePath);
+  }
+
   /**
    * Check if two images are exactly equal *in pixel values*
    * (ignoring metadata).
@@ -347,7 +374,7 @@ export class Spritely {
       .mask({threshold}) as ImageExt;
   }
 
-  static getForegroundBounds(image:ImageExt){
+  static getForegroundBounds(image:ImageExt,padding=0){
     const foreground = Spritely.getForegroundMask(image);
     let left = Infinity;
     let right = -Infinity;
@@ -362,6 +389,13 @@ export class Spritely {
           bottom = Math.max(bottom,y);
         }
       }
+    }
+    padding = Math.round(padding);
+    if(padding>0){
+      top    = Math.max(top    - padding,0);
+      left   = Math.max(left   - padding,0);
+      right  = Math.min(right  + padding,foreground.width -1);
+      bottom = Math.min(bottom + padding,foreground.height-1);
     }
     return {
       left:   left  ==  Infinity ? 0 : left,

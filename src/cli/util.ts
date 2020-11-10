@@ -13,6 +13,7 @@ import fs from "fs-extra";
 export interface SpritelyCliGeneralOptions {
   folder: string,
   recursive?: boolean,
+  allowSubimageSizeMismatch?: boolean,
   move?: string,
   rootImagesAreSprites?: boolean,
   purgeTopLevelFolders?: boolean,
@@ -30,6 +31,11 @@ export function addGeneralOptions(cli: typeof commander){
       USE WITH CAUTION!
       Each folder with immediate PNG children is treated as a sprite,
       with those children as its subimages.
+    `)
+    .option("-a --allow-subimage-size-mismatch", oneline`
+      By default it is required that all subimages of a sprite are
+      supposed to have identical dimensions. You can optionally bypass
+      this requirement.
     `)
     .option("-m --move <path>", oneline`
       Move images to a different folder after modification.
@@ -50,13 +56,13 @@ export function addGeneralOptions(cli: typeof commander){
     `)
     .option("-p --if-match", oneline`
       Only perform the tasks on sprites whose top-level folder
-      (relative to --folder) match this pattern. Case-sensitive,
+      (relative to --folder) matches this pattern. Case-sensitive,
       converted to a regex pattern using JavaScript's 'new RegExp()'.
     `);
   return cli;
 }
 
-export function getSpriteDirs(folder:string,recursive?:boolean){
+function getSpriteDirs(folder:string,recursive?:boolean){
   const folders = recursive
     ? [folder,...listFoldersSync(folder,recursive)]
     : [folder];
@@ -66,10 +72,10 @@ export function getSpriteDirs(folder:string,recursive?:boolean){
 
 type SpritelyFixMethod = 'crop'|'bleed';
 
-async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDir:string,sourceRoot:string,moveRoot?:string){
+async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDir:string,sourceRoot:string,moveRoot?:string,allowSubimageSizeMismatch?:boolean){
   const methods = typeof method == 'string' ? [method] : method;
   try{
-    const sprite = new Spritely(spriteDir);
+    const sprite = new Spritely({spriteDirectory:spriteDir,allowSubimageSizeMismatch});
     for(const spriteMethod of methods){
       await sprite[spriteMethod]();
     }
@@ -83,16 +89,16 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
       catch{}
       await sprite.move(path.dirname(movedSpritePath));
     }
-    console.log(`Cleaned sprite "${spriteDir}"`);
+    console.log(`Cleaned sprite "${spriteDir}".`);
   }
   catch(err){
-    console.log(`Sprite clean failed for "${spriteDir}"`,err?.message);
+    console.log(`Sprite clean failed for "${spriteDir}".`,err?.message);
   }
 }
 
-async function fixSpriteDirs(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDirs:string[],sourceRoot:string,moveRoot?:string){
+async function fixSpriteDirs(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDirs:string[],sourceRoot:string,moveRoot?:string,allowSubimageSizeMismatch?:boolean){
   for(const spriteDir of spriteDirs){
-    await fixSpriteDir(method,spriteDir,sourceRoot,moveRoot);
+    await fixSpriteDir(method,spriteDir,sourceRoot,moveRoot,allowSubimageSizeMismatch);
   }
 }
 
@@ -116,10 +122,14 @@ export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],op
   const ifMatch = options.ifMatch ? new RegExp(options.ifMatch) : null;
   const spriteDirs = getSpriteDirs(options.folder,options.recursive)
     .filter(spriteDir=>{
-      const topLevelDir = rootDir(spriteDir,options.folder);
-      if(!topLevelDir){ return false; }
-      if(!ifMatch){ return true; }
-      return topLevelDir.match(ifMatch);
+      if(options.purgeTopLevelFolders || options.ifMatch){
+        // Then make sure everything *has* a top-level folder
+        const topLevelDir = rootDir(spriteDir,options.folder);
+        if(!topLevelDir){ return false; }
+        if(!ifMatch){ return true; }
+        return topLevelDir.match(ifMatch);
+      }
+      return true;
     });
   if(options.purgeTopLevelFolders && options.move){
     const topLevelDirs = [
@@ -139,7 +149,7 @@ export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],op
       fs.rmdirSync(moveDir);
     }
   }
-  await fixSpriteDirs(method,spriteDirs,options.folder,options.move);
+  await fixSpriteDirs(method,spriteDirs,options.folder,options.move,options.allowSubimageSizeMismatch);
   if(options.move){
     removeEmptyDirsSync(options.folder);
   }

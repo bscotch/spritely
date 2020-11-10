@@ -61,6 +61,14 @@ describe("Spritely", function(){
     expect(()=>new Spritely(sandboxPath('invalid-subimages'))).to.throw(SpritelyError);
   });
 
+  it("can create a Spritely instance with mismatched subimage sizes if forced", async function(){
+    const sprite = new Spritely({
+      spriteDirectory: sandboxPath('invalid-subimages'),
+      allowSubimageSizeMismatch: true
+    }); // would otherwise throw an error
+    expect(sprite.paths.length).to.equal(2);
+  });
+
   it("can crop a sprite without error", async function(){
     const sprite = new Spritely(sandboxPath('valid-subimages'));
     await sprite.crop();
@@ -178,6 +186,19 @@ describe("Spritely", function(){
     new Spritely(sandboxPath('moved','subdir','subsubdir'));
     // Should get errors when trying to get the original sprite
     expect(()=>new Spritely(sandboxPath('dir','subdir','subsubdir'))).to.throw();
+  });
+
+  it("can crop sprites with differently-sized subimages", async function(){
+    await fixSprites(['crop'],{
+      folder: sandboxPath('invalid-subimages'),
+      allowSubimageSizeMismatch: true
+    });
+    for(let i=1;i<=2;i++){
+      expect(await Spritely.imagesAreEqual(
+        sandboxPath('invalid-subimages',`subimage-${i}.png`),
+        sandboxPath('invalid-subimages-cropped',`subimage-${i}.png`),
+      ),`cropped subimage ${i} should match reference`).to.be.true;
+    }
   });
 
   it("can filter which sprites are modified", async function(){

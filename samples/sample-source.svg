@@ -23,9 +23,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.98994949"
-     inkscape:cx="246.34231"
-     inkscape:cy="303.04792"
+     inkscape:zoom="1.4"
+     inkscape:cx="314.4312"
+     inkscape:cy="628.95891"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
@@ -44,7 +44,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -341,5 +341,45 @@
          x="63.311241"
          y="87.933968"
          style="stroke-width:0.264583">C</tspan></text>
+    <rect
+       style="fill:none;stroke-width:0.264583"
+       id="rect864"
+       width="43.467262"
+       height="57.830357"
+       x="9.7887402"
+       y="157.1243"
+       inkscape:export-filename="C:\Users\coste\CODE\BSCOTCH\spritely\samples\invalid-subimages\subimage-1.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <rect
+       style="fill:#0000ff;stroke-width:0.264583"
+       id="rect866"
+       width="10.583333"
+       height="12.851191"
+       x="33.034275"
+       y="167.14066"
+       inkscape:export-filename="C:\Users\coste\CODE\BSCOTCH\spritely\samples\invalid-subimages\subimage-1.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <rect
+       style="fill:none;stroke-width:0.264583"
+       id="rect870"
+       width="43.467262"
+       height="57.830357"
+       x="164.30585"
+       y="-145.10448"
+       inkscape:export-filename="C:\Users\coste\CODE\BSCOTCH\spritely\samples\invalid-subimages\subimage-2.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       transform="rotate(90)" />
+    <circle
+       style="fill:#ff0000;stroke-width:0.264583"
+       id="circle872"
+       cx="116.18929"
+       cy="186.03947"
+       r="7.5595236"
+       inkscape:export-filename="C:\Users\coste\CODE\BSCOTCH\spritely\samples\invalid-subimages\subimage-2.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
   </g>
 </svg>
