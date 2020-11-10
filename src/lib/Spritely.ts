@@ -15,6 +15,7 @@ import {removeEmptyDirsSync} from "@bscotch/utility";
 // but is needed since Typescript constructors are synchronous.
 import {imageSize} from "image-size";
 import { sha256 } from "./utility";
+import { option } from "commander";
 
 export type SpriteCreatedBy = 'inkscape'|'clipstudiopaint';
 export interface SpriteEdgeCorrectionOptions {
@@ -30,6 +31,10 @@ interface ImageExt extends Image {
   subtractImage(image:ImageExt,options?:{bitDepth?:number,channels?:number[]}):Image,
 }
 
+interface SpritelyOptions {
+  spriteDirectory?: string
+}
+
 export class Spritely {
 
   private spriteRoot: string;
@@ -39,9 +44,12 @@ export class Spritely {
 
   /**
    * Create a Sprite instance using a folder full of sprite subimages.
+   * @param options Either the path to the sprite folder, or a SpritelyOptions object
    */
-  constructor(directory?:string){
-    this.spriteRoot = directory || process.cwd();
+  constructor(options?:string|SpritelyOptions){
+    this.spriteRoot = typeof options == 'string'
+      ? options
+      : options?.spriteDirectory || process.cwd();
     assertDirectoryExists(this.spriteRoot);
 
     this.subimagePaths = Spritely.getSubimages(this.spriteRoot);
