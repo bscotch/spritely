@@ -238,17 +238,6 @@ export class Spritely {
     };
   }
 
-  /**
-   * Postfix a filename with a string
-   *
-   * @example
-   * `postfixFilename("hello/world.png","123") -> "hello/world-123.png"`
-   */
-  static postfixFilename(sourceFile:string,postfix:string){
-    const {dir,name,ext} = path.parse(sourceFile);
-    return path.join(dir,`${name}-${postfix}${ext}`);
-  }
-
   static async bleed(imagePath:string,options?:SpriteEdgeCorrectionOptions){
     const img = await Image.load(imagePath) as ImageExt;
     assert(img.alpha,'Images must have an alpha channel to be corrected.');
@@ -356,7 +345,7 @@ export class Spritely {
    * Compute a checksum based on the pixel values of an image.
    * Remains static even when file metadata changes.
    */
-  static async pixelsChecksum(imagePath:string){
+  private static async pixelsChecksum(imagePath:string){
     const values = (await Image.load(imagePath) as Image).data;
     return sha256(Buffer.from(values));
   }
@@ -368,13 +357,13 @@ export class Spritely {
    * Any alpha >= than this is considered foreground. On a 0-1 scale.
    * Defaults to 1/bitDepth (i.e. any alpha besides 0 is foreground)
    */
-  static getForegroundMask(image:ImageExt,foregroundMinAlphaFraction?:number){
+  private static getForegroundMask(image:ImageExt,foregroundMinAlphaFraction?:number){
     const threshold = foregroundMinAlphaFraction || 1/Math.pow(2,image.bitDepth);
     return image.getChannel(image.channels-1)
       .mask({threshold}) as ImageExt;
   }
 
-  static getForegroundBounds(image:ImageExt,padding=0){
+  private static getForegroundBounds(image:ImageExt,padding=0){
     const foreground = Spritely.getForegroundMask(image);
     let left = Infinity;
     let right = -Infinity;
