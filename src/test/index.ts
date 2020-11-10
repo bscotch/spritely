@@ -5,6 +5,7 @@ import path from "path";
 import { SpritelyError } from "../lib/errors";
 import {fixSprites} from "../cli/util";
 import { SpritelyBatch } from "../lib/SpritelyBatch";
+import { Color } from "../lib/Color";
 
 const sandboxRoot = "./sandbox";
 const samplesRoot = "./samples";
@@ -32,6 +33,19 @@ describe("Spritely", function(){
 
   beforeEach(function(){
     resetSandbox();
+  });
+
+  it("can create Color instances",function(){
+    expect(()=>new Color('meh')).to.throw();
+    expect(()=>new Color([1,2333,0,1])).to.throw();
+    expect(new Color('FFFFFF').rgba).to.eql([255,255,255,255]);
+    const color = new Color('AD29E105');
+    expect(color.rgba).to.eql([173,41,225,5]);
+    expect(color.rgb).to.eql([173,41,225]);
+    expect(color.rgbHex).to.eql('AD29E1'.toLowerCase());
+    expect(new Color('AaBBFf00').equalsRgb(new Color('aabbff33'))).to.be.true;
+    expect(new Color('AaBBFf00').equalsRgba(new Color('aabbff33'))).to.be.false;
+    expect(new Color('AaBBF000').equalsRgba(new Color('aabbff33'))).to.be.false;
   });
 
   it("can create a Spritely instance from a folder of subimages", async function(){
