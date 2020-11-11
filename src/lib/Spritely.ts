@@ -473,14 +473,21 @@ export class Spritely {
 
   private static async applyGradientMap(path:string,gradient:GradientMap){
     const image = await Image.load(path) as ImageExt;
+    const isRgb = (image.alpha && image.channels==4) || (!image.alpha && image.channels==3);
     for(let x=0; x<image.width; x++){
       for(let y=0; y<image.height; y++){
         const currentColor = image.getPixelXY(x,y);
         const getRelativeIntensity = (value:number)=>value/Math.pow(2,image.bitDepth);
-        if(currentColor[3]>0){
+        if(!image.alpha || currentColor[image.channels-1]>0){
           let relativeIntensity = getRelativeIntensity(currentColor[0]);
+          const pixelIsGray = currentColor.every((value,i)=>{
+            const isAlphaChannel = image.alpha && i==image.channels-1;
+            if(isAlphaChannel){ return true; }
+            return value == currentColor[0];
+          });
           // (assumed to be grayscale, so that all values are the same)
-          if(currentColor[0]!=currentColor[1] || currentColor[1]!=currentColor[2]){
+          if(!pixelIsGray){
+            assert(isRgb,`Images must be in grayscale or RGB(A) color.`);
             // Then this pixel isn't grayscale, so compute intensity
             relativeIntensity = getRelativeIntensity(0.2126*currentColor[0] + 0.7152*currentColor[1] + 0.0722*currentColor[2]);
           }
