@@ -168,7 +168,7 @@ export class Spritely {
    * with copies of each subimage converted from Grayscale to
    * color using the associated gradMap.
    */
-  async applyGradientMaps(deleteReferenceImages?:boolean){
+  async applyGradientMaps(deleteSourceImages?:boolean){
     assert(this.getGradientMaps().length,`No gradient maps found for sprite ${this.name}`);
     const waits = this.gradientMaps.map(async gradMap=>{
       const destFolder = path.join(this.spriteRoot,gradMap.name);
@@ -178,6 +178,9 @@ export class Spritely {
         const destPath = path.join(destFolder,path.basename(subimagePath));
         await fs.copyFile(subimagePath,destPath);
         await Spritely.applyGradientMap(destPath,gradMap);
+        if(deleteSourceImages){
+          await fs.remove(subimagePath);
+        }
       }
     });
     await Promise.all(waits);
