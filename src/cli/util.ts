@@ -19,6 +19,7 @@ export interface SpritelyCliGeneralOptions {
   purgeTopLevelFolders?: boolean,
   ifMatch?: string,
   deleteSource?: boolean,
+  gradientMapsFile?: string,
 }
 
 export const cliOptions = {
@@ -104,7 +105,8 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
   try{
     const sprite = new Spritely({
       spriteDirectory: spriteDir,
-      allowSubimageSizeMismatch: options.allowSubimageSizeMismatch
+      allowSubimageSizeMismatch: options.allowSubimageSizeMismatch,
+      gradientMapsFile: options.gradientMapsFile
     });
     for(const spriteMethod of methods){
       // @ts-expect-error
