@@ -94,16 +94,28 @@ describe("Spritely", function(){
       allowSubimageSizeMismatch: true
     });
     const grads = sprite.getGradientMaps();
-    expect(grads.length).to.equal(2);
+    expect(grads.length).to.be.greaterThan(0);
   });
 
-  it.only("can apply gradient maps", async function(){
+  it("can apply gradient maps", async function(){
     const sprite = new Spritely({
       spriteDirectory: sandboxPath('gradmap'),
       allowSubimageSizeMismatch: true
     });
     await sprite.applyGradientMaps();
-    process.exit(1);
+    const gradMapNames = sprite.getGradientMaps().map(g=>g.name);
+    expect(gradMapNames.length).to.be.greaterThan(0);
+    for(const gradMapName of gradMapNames){
+      const expected = new Spritely({
+        spriteDirectory: sandboxPath('gradmap-applied',gradMapName),
+        allowSubimageSizeMismatch: true
+      });
+      const actual = new Spritely({
+        spriteDirectory: sandboxPath('gradmap',gradMapName),
+        allowSubimageSizeMismatch: true
+      });
+      expect(await expected.equals(actual)).to.be.true;
+    }
   });
 
   it("can create a Spritely instance from a folder of subimages", async function(){
@@ -304,6 +316,6 @@ describe("Spritely", function(){
   });
 
   after(function(){
-    resetSandbox();
+    // resetSandbox();
   });
 });
