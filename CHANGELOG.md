@@ -1,3 +1,32 @@
+# [1.2.0](https://github.com/bscotch/spritely/compare/v1.1.2...v1.2.0) (2020-11-11)
+
+
+### Bug Fixes
+
+* Color objects no longer expose the reference to their RGBA values array, instead always sending clones. This prevents accidental changes to color values that aren't refelected by other values in the Color instance. ([57d9794](https://github.com/bscotch/spritely/commit/57d97943ab5732106757a63aeb8f6bb623b02013))
+
+
+### Features
+
+* A 'Color' class now exits for more easily managing RGBA values. ([6e7178c](https://github.com/bscotch/spritely/commit/6e7178c4ebfb07efe0dd3ae04b7f528e59bdde49))
+* A 'Color' class now exits for more easily managing RGBA values. ([1461975](https://github.com/bscotch/spritely/commit/14619752fec53ec63711ea23f18dfdd21262dabd))
+* Allow subimage sizes to mismatch if requested. Ensure that cropping still works in this scenario. ([e7764b0](https://github.com/bscotch/spritely/commit/e7764b04a1395904488075d0b597c092c15d10ad)), closes [#13](https://github.com/bscotch/spritely/issues/13)
+* Can now optionally delete source images upon application of Gradient Maps. ([ac0facc](https://github.com/bscotch/spritely/commit/ac0facccaf379e758f5f289e437f35553c993980))
+* Gradient mapping can now use a manually-specified mapping file. ([c24fe21](https://github.com/bscotch/spritely/commit/c24fe21665ee3580be789e3eb7c3bc739fa59984))
+* Gradient maps can now be applied via the CLI. ([70c08f7](https://github.com/bscotch/spritely/commit/70c08f7e56c15db253e2f6565c5cbe7a10b31650))
+* GradientMaps (as YML files) are now loaded when Spritely instances are created. ([fe79ec8](https://github.com/bscotch/spritely/commit/fe79ec853cd014afc762de3e1817c91909702e5e))
+* GradientMaps (as YML files) are now loaded when Spritely instances are created. ([8409504](https://github.com/bscotch/spritely/commit/8409504a3dcd9dd99c6442039b56534698ffdab4))
+* Several static methods are now marked private, since there is no need to expose them outside the Spritely class. ([e49dc8a](https://github.com/bscotch/spritely/commit/e49dc8a18edd52e0a724f3e432b660d8fe337bda))
+* Several static methods are now marked private, since there is no need to expose them outside the Spritely class. ([2c38913](https://github.com/bscotch/spritely/commit/2c389131b2f53f6fb8b1c96604dc51ee1b02a364))
+* Spritely instances can now apply gradient maps, creating new images as a consequence. ([d76493b](https://github.com/bscotch/spritely/commit/d76493bf94d804580b301f04c06e7748754e7dc3)), closes [#14](https://github.com/bscotch/spritely/issues/14)
+* Spritely instances now allow for an options object (backwards compatible). ([08e8b3e](https://github.com/bscotch/spritely/commit/08e8b3ef01bd13a8522a42ab0911bab5626844be))
+* The Color class now includes a 'toJSON' method. ([acc19cb](https://github.com/bscotch/spritely/commit/acc19cb17e8cfc8a29dfdb1bdadc64b396b74455))
+* The Color class now includes a 'toJSON' method. ([0e520de](https://github.com/bscotch/spritely/commit/0e520de666526554f7a67629d80d42c786c22bbd))
+* The test samples now include images for testing GradientMaps. ([bd94100](https://github.com/bscotch/spritely/commit/bd94100fb40d18419c9da0db96dadac215979c96))
+* The test samples now include images for testing GradientMaps. ([84fdb41](https://github.com/bscotch/spritely/commit/84fdb4164280bbdddcc2c9e2c8634fbbc66c2a70))
+
+
+
 ## [1.1.2](https://github.com/bscotch/spritely/compare/v1.1.1...v1.1.2) (2020-10-26)
 
 
