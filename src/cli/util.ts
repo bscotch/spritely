@@ -18,47 +18,75 @@ export interface SpritelyCliGeneralOptions {
   rootImagesAreSprites?: boolean,
   purgeTopLevelFolders?: boolean,
   ifMatch?: string,
+  deleteSource?: boolean,
+  gradientMapsFile?: string,
 }
 
-export function addGeneralOptions(cli: typeof commander){
-  cli.option("-f --folder <path>", oneline`
+export const cliOptions = {
+  folder: [
+    "-f --folder <path>",
+    oneline`
       Path to folder of subimages. Only
       immediate PNG children of each folder are treated as subimages.
-      Defaults to the current working directory.
-    `, process.cwd())
-    .option("-r --recursive", oneline`
+      Defaults to the current working directory.`,
+    process.cwd()
+  ],
+  recursive: [
+    "-r --recursive",
+    oneline`
       Treat --folder, and all folders inside --folder (recursively), as sprites.
       USE WITH CAUTION!
       Each folder with immediate PNG children is treated as a sprite,
-      with those children as its subimages.
-    `)
-    .option("-a --allow-subimage-size-mismatch", oneline`
+      with those children as its subimages.`
+  ],
+  mismatch: [
+    "-a --allow-subimage-size-mismatch",
+    oneline`
       By default it is required that all subimages of a sprite are
       supposed to have identical dimensions. You can optionally bypass
-      this requirement.
-    `)
-    .option("-m --move <path>", oneline`
+      this requirement.`
+  ],
+  move: [
+    "-m --move <path>",
+    oneline`
       Move images to a different folder after modification.
       Useful for pipelines that use presence/absence
       of images as signals. Maintains relative paths.
       Deletes any existing subimages before copying the new
-      ones over.
-    `)
-    .option("--purge-top-level-folders", oneline`
+      ones over.`
+  ],
+  purge: [
+    "--purge-top-level-folders",
+    oneline`
       Delete top-level folders (immediate children of --folder)
-      prior to moving changed images.
-    `)
-    .option("-s --root-images-are-sprites", oneline`
+      prior to moving changed images.`
+  ],
+  /** Specify root images are sprites */
+  rootImages: [
+    "-s --root-images-are-sprites",
+    oneline`
       Prior to correction, move any immediate PNG children of
       --folder into folders with the same name as those images.
       This allows root-level images to be treated as individual
-      sprites.
-    `)
-    .option("-p --if-match", oneline`
+      sprites.`
+  ],
+  match:[
+    "-p --if-match",
+    oneline`
       Only perform the tasks on sprites whose top-level folder
       (relative to --folder) matches this pattern. Case-sensitive,
-      converted to a regex pattern using JavaScript's 'new RegExp()'.
-    `);
+      converted to a regex pattern using JavaScript's 'new RegExp()'.`
+  ]
+} as const;
+
+export function addGeneralOptions(cli: typeof commander){
+  cli.option(...cliOptions.folder)
+    .option(...cliOptions.recursive)
+    .option(...cliOptions.mismatch)
+    .option(...cliOptions.move)
+    .option(...cliOptions.purge)
+    .option(...cliOptions.rootImages)
+    .option(...cliOptions.match);
   return cli;
 }
 
@@ -70,17 +98,22 @@ function getSpriteDirs(folder:string,recursive?:boolean){
   return folders;
 }
 
-type SpritelyFixMethod = 'crop'|'bleed';
+type SpritelyFixMethod = 'crop'|'bleed'|'applyGradientMaps';
 
-async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDir:string,sourceRoot:string,moveRoot?:string,allowSubimageSizeMismatch?:boolean){
+async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDir:string,options:SpritelyCliGeneralOptions){
   const methods = typeof method == 'string' ? [method] : method;
   try{
-    const sprite = new Spritely({spriteDirectory:spriteDir,allowSubimageSizeMismatch});
+    const sprite = new Spritely({
+      spriteDirectory: spriteDir,
+      allowSubimageSizeMismatch: options.allowSubimageSizeMismatch,
+      gradientMapsFile: options.gradientMapsFile
+    });
     for(const spriteMethod of methods){
-      await sprite[spriteMethod]();
+      // @ts-expect-error
+      await sprite[spriteMethod](spriteMethod=='applyGradientMaps' ? options.deleteSource : undefined);
     }
-    if(moveRoot){
-      const movedSpritePath = path.join(moveRoot, path.relative(sourceRoot,spriteDir));
+    if(options.move){
+      const movedSpritePath = path.join(options.move, path.relative(options.folder,spriteDir));
       // Clear any existing images in the target directory
       try{
         listFilesByExtensionSync(movedSpritePath,'png')
@@ -96,9 +129,9 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
   }
 }
 
-async function fixSpriteDirs(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDirs:string[],sourceRoot:string,moveRoot?:string,allowSubimageSizeMismatch?:boolean){
+async function fixSpriteDirs(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDirs:string[],options: SpritelyCliGeneralOptions){
   for(const spriteDir of spriteDirs){
-    await fixSpriteDir(method,spriteDir,sourceRoot,moveRoot,allowSubimageSizeMismatch);
+    await fixSpriteDir(method,spriteDir,options);
   }
 }
 
@@ -149,7 +182,7 @@ export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],op
       fs.rmdirSync(moveDir);
     }
   }
-  await fixSpriteDirs(method,spriteDirs,options.folder,options.move,options.allowSubimageSizeMismatch);
+  await fixSpriteDirs(method,spriteDirs,options);
   if(options.move){
     removeEmptyDirsSync(options.folder);
   }

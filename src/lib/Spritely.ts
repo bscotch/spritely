@@ -45,6 +45,12 @@ interface SpritelyOptions {
    * unpredicatable.
    */
   allowSubimageSizeMismatch?: boolean,
+  /**
+   * By default, Spritely instances search for a gradmap file
+   * inside the sprite's directory. You can instead specify
+   * a gradient map file to be used.
+   */
+  gradientMapsFile?: string,
 }
 
 export class Spritely {
@@ -61,20 +67,19 @@ export class Spritely {
    * @param options Either the path to the sprite folder, or a SpritelyOptions object
    */
   constructor(options?:string|SpritelyOptions){
-    this.spriteRoot = typeof options == 'string'
-      ? options
-      : options?.spriteDirectory || process.cwd();
+    options = typeof options == 'string'
+      ? {spriteDirectory: options}
+      : options || {};
+    this.spriteRoot = options.spriteDirectory || process.cwd();
     assertDirectoryExists(this.spriteRoot);
-    if(typeof options != 'string'){
-      this.allowSubimageSizeMismatch = Boolean(options?.allowSubimageSizeMismatch);
-    }
+    this.allowSubimageSizeMismatch = Boolean(options.allowSubimageSizeMismatch);
 
     this.subimagePaths = Spritely.getSubimages(this.spriteRoot);
     const {width,height} = Spritely.getSubimagesSizeSync(this.subimagePaths,this.allowSubimageSizeMismatch);
     this.subimageWidth = width;
     this.subimageHeight = height;
 
-    this.loadGradientMaps();
+    this.loadGradientMaps(options.gradientMapsFile);
   }
 
   /** The name of this sprite (its folder name) */
@@ -162,6 +167,31 @@ export class Spritely {
     return this;
   }
 
+  /**
+   * For each gradient map found in `{sprite}/gradmaps.yml`,
+   * create a new folder `{sprite}/{gradmapName}/` and fill it
+   * with copies of each subimage converted from Grayscale to
+   * color using the associated gradMap.
+   */
+  async applyGradientMaps(deleteSourceImages?:boolean){
+    assert(this.getGradientMaps().length,`No gradient maps found for sprite ${this.name}`);
+    const waits = this.gradientMaps.map(async gradMap=>{
+      const destFolder = path.join(this.spriteRoot,gradMap.name);
+      await fs.ensureDir(destFolder);
+      await fs.emptyDir(destFolder);
+      for(const subimagePath of this.paths){
+        const destPath = path.join(destFolder,path.basename(subimagePath));
+        await fs.copyFile(subimagePath,destPath);
+        await Spritely.applyGradientMap(destPath,gradMap);
+        if(deleteSourceImages){
+          await fs.remove(subimagePath);
+        }
+      }
+    });
+    await Promise.all(waits);
+    return this;
+  }
+
   /** Copy this sprite (folder + subimages) to another location */
   async copy(destinationFolder:string){
     const toSpriteFolder = path.join(destinationFolder,this.name);
@@ -172,6 +202,7 @@ export class Spritely {
       newPaths.push(newPath);
       fs.copyFileSync(subimagePath,newPath);
     }
+    return this;
   }
 
   /**
@@ -186,6 +217,7 @@ export class Spritely {
     // Attempt to remove the folders (and clean recursively)
     removeEmptyDirsSync(this.spriteRoot);
     this.subimagePaths = [];
+    return this;
   }
 
   /**
@@ -194,17 +226,20 @@ export class Spritely {
   async move(destinationFolder:string){
     await this.copy(destinationFolder);
     await this.delete();
+    return this;
   }
 
-  private loadGradientMaps(){
-    const possibleFileNames = ['gradmaps','gradients','gradmap'];
-    const possibleExtensions = ['yml','yaml','txt'];
-    for(const possibleFileName of possibleFileNames){
-      for(const possibleExtension of possibleExtensions){
-        const filename = path.join(this.spriteRoot,`${possibleFileName}.${possibleExtension}`);
-        if(fs.existsSync(filename)){
-          this.gradientMaps.push(...Spritely.gradientMapsFromFile(filename));
-        }
+  private loadGradientMaps(gradientMapsFile?:string){
+    const defaultNames = ['gradmaps','gradients','gradmap']
+      .map(name=>['yml','yaml','txt'].map(ext=>`${name}.${ext}`))
+      .flat(2)
+      .map(filename=>path.join(this.spriteRoot,filename));
+    const fileNames = gradientMapsFile
+      ? [gradientMapsFile]
+      : defaultNames;
+    for(const filename of fileNames){
+      if(fs.existsSync(filename)){
+        this.gradientMaps.push(...Spritely.gradientMapsFromFile(filename));
       }
     }
     return this.gradientMaps;
@@ -354,8 +389,8 @@ export class Spritely {
    * (ignoring metadata).
    */
   static async imagesAreEqual(imagePath1:string,imagePath2:string){
-    const [img1,img2] = await Promise
-      .all([imagePath1,imagePath2].map(img=>Image.load(img) as Promise<ImageExt>));
+    const img1 = await Image.load(imagePath1) as ImageExt;
+    const img2 = await Image.load(imagePath2) as ImageExt;
     // Start with cheap checks, then check value-by-value aborting when one fails.
     return img1.channels == img2.channels &&
       img1.bitDepth  == img2.bitDepth &&
@@ -434,5 +469,27 @@ export class Spritely {
       grads.push(new GradientMap(name,gradients[name]));
     }
     return grads;
+  }
+
+  private static async applyGradientMap(path:string,gradient:GradientMap){
+    const image = await Image.load(path) as ImageExt;
+    for(let x=0; x<image.width; x++){
+      for(let y=0; y<image.height; y++){
+        const currentColor = image.getPixelXY(x,y);
+        const getRelativeIntensity = (value:number)=>value/Math.pow(2,image.bitDepth);
+        if(currentColor[3]>0){
+          let relativeIntensity = getRelativeIntensity(currentColor[0]);
+          // (assumed to be grayscale, so that all values are the same)
+          if(currentColor[0]!=currentColor[1] || currentColor[1]!=currentColor[2]){
+            // Then this pixel isn't grayscale, so compute intensity
+            relativeIntensity = getRelativeIntensity(0.2126*currentColor[0] + 0.7152*currentColor[1] + 0.0722*currentColor[2]);
+          }
+          const newPosition = Math.floor(relativeIntensity*100);
+          const newColor = gradient.getColorAtPosition(newPosition);
+          image.setPixelXY(x,y,newColor.rgb);
+        }
+      }
+    }
+    await image.save(path);
   }
 }

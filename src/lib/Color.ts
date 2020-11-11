@@ -8,11 +8,11 @@ type RgbaTuple = [r: number, g: number, b: number, a:number];
 
 export class Color {
   /** Color as RGB tuple (each color in 0-255 scale) */
-  readonly rgba: RgbaTuple;
+  private rgbaTuple: RgbaTuple;
   /** Hexadecimal representation of color */
   readonly rgbaHex: string;
 
-  constructor(color:string|RgbTuple|RgbaTuple){
+  constructor(color:string|number[]){
     if(typeof color == 'string'){
       // Then assume it's hex
       if(color[0]=='#'){
@@ -24,7 +24,7 @@ export class Color {
       if(this.rgbaHex.length != 8){
         this.rgbaHex = this.rgbaHex.slice(0,6) + 'ff';
       }
-      this.rgba = (this.rgbaHex.match(/(\w{2})/g) as [string,string,string,string])
+      this.rgbaTuple = (this.rgbaHex.match(/(\w{2})/g) as [string,string,string,string])
         .map(hex=>parseInt(hex,16)) as RgbaTuple;
     }
     else{
@@ -32,30 +32,34 @@ export class Color {
       assert(color.every(value=>value>=0 && value<=255), 'Every color value must be in range 0-255');
       assert(color.every(value=>Math.floor(value)==value), 'Every color value must be an integer');
       color[3] = color[3] ?? 255 ;
-      this.rgba = color as RgbaTuple;
+      this.rgbaTuple = color as RgbaTuple;
       this.rgbaHex = color.map(value=>Number(value).toString(16)).join('');
     }
   }
 
   get red(){
-    return this.rgba[0];
+    return this.rgbaTuple[0];
   }
 
   get green(){
-    return this.rgba[1];
+    return this.rgbaTuple[1];
   }
 
   get blue(){
-    return this.rgba[2];
+    return this.rgbaTuple[2];
   }
 
   get alpha(){
-    return this.rgba[3];
+    return this.rgbaTuple[3];
   }
 
   /** RGB values as 0-255 array */
   get rgb(){
-    return this.rgba.slice(0,3) as RgbTuple;
+    return this.rgbaTuple.slice(0,3) as RgbTuple;
+  }
+
+  get rgba(){
+    return [...this.rgbaTuple];
   }
 
   /** RGB values as a hex string */
@@ -65,10 +69,10 @@ export class Color {
 
   get rgbaObject(){
     return {
-      red:   this.rgba[0],
-      green: this.rgba[1],
-      blue:  this.rgba[2],
-      alpha: this.rgba[3],
+      red:   this.rgbaTuple[0],
+      green: this.rgbaTuple[1],
+      blue:  this.rgbaTuple[2],
+      alpha: this.rgbaTuple[3],
     };
   }
 
@@ -79,11 +83,11 @@ export class Color {
   }
 
   equalsRgb(color:Color){
-    return this.rgb.every((value,i)=>color.rgba[i]==value);
+    return this.rgb.every((value,i)=>color.rgbaTuple[i]==value);
   }
 
   equalsRgba(color:Color){
-    return this.rgba.every((value,i)=>color.rgba[i]==value);
+    return this.rgbaTuple.every((value,i)=>color.rgbaTuple[i]==value);
   }
 
   toJSON(){
