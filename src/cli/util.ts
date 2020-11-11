@@ -18,6 +18,7 @@ export interface SpritelyCliGeneralOptions {
   rootImagesAreSprites?: boolean,
   purgeTopLevelFolders?: boolean,
   ifMatch?: string,
+  deleteSource?: boolean,
 }
 
 export const cliOptions = {
@@ -98,15 +99,19 @@ function getSpriteDirs(folder:string,recursive?:boolean){
 
 type SpritelyFixMethod = 'crop'|'bleed'|'applyGradientMaps';
 
-async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDir:string,sourceRoot:string,moveRoot?:string,allowSubimageSizeMismatch?:boolean){
+async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDir:string,options:SpritelyCliGeneralOptions){
   const methods = typeof method == 'string' ? [method] : method;
   try{
-    const sprite = new Spritely({spriteDirectory:spriteDir,allowSubimageSizeMismatch});
+    const sprite = new Spritely({
+      spriteDirectory: spriteDir,
+      allowSubimageSizeMismatch: options.allowSubimageSizeMismatch
+    });
     for(const spriteMethod of methods){
-      await sprite[spriteMethod]();
+      // @ts-expect-error
+      await sprite[spriteMethod](spriteMethod=='applyGradientMaps' ? options.deleteSource : undefined);
     }
-    if(moveRoot){
-      const movedSpritePath = path.join(moveRoot, path.relative(sourceRoot,spriteDir));
+    if(options.move){
+      const movedSpritePath = path.join(options.move, path.relative(options.folder,spriteDir));
       // Clear any existing images in the target directory
       try{
         listFilesByExtensionSync(movedSpritePath,'png')
@@ -122,9 +127,9 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
   }
 }
 
-async function fixSpriteDirs(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDirs:string[],sourceRoot:string,moveRoot?:string,allowSubimageSizeMismatch?:boolean){
+async function fixSpriteDirs(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDirs:string[],options: SpritelyCliGeneralOptions){
   for(const spriteDir of spriteDirs){
-    await fixSpriteDir(method,spriteDir,sourceRoot,moveRoot,allowSubimageSizeMismatch);
+    await fixSpriteDir(method,spriteDir,options);
   }
 }
 
@@ -175,7 +180,7 @@ export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],op
       fs.rmdirSync(moveDir);
     }
   }
-  await fixSpriteDirs(method,spriteDirs,options.folder,options.move,options.allowSubimageSizeMismatch);
+  await fixSpriteDirs(method,spriteDirs,options);
   if(options.move){
     removeEmptyDirsSync(options.folder);
   }
