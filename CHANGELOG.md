@@ -1,3 +1,12 @@
+## [1.2.1](https://github.com/bscotch/spritely/compare/v1.2.0...v1.2.1) (2020-11-11)
+
+
+### Features
+
+* GradientMap application will now evaluate all discovered color channels in source images. ([d8cd674](https://github.com/bscotch/spritely/commit/d8cd674596903a4da439be98cb887ed21a6df859)), closes [#15](https://github.com/bscotch/spritely/issues/15)
+
+
+
 # [1.2.0](https://github.com/bscotch/spritely/compare/v1.1.2...v1.2.0) (2020-11-11)
 
 
