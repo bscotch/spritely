@@ -37,6 +37,22 @@ export class Color {
     }
   }
 
+  get red(){
+    return this.rgba[0];
+  }
+
+  get green(){
+    return this.rgba[1];
+  }
+
+  get blue(){
+    return this.rgba[2];
+  }
+
+  get alpha(){
+    return this.rgba[3];
+  }
+
   /** RGB values as 0-255 array */
   get rgb(){
     return this.rgba.slice(0,3) as RgbTuple;
@@ -68,5 +84,9 @@ export class Color {
 
   equalsRgba(color:Color){
     return this.rgba.every((value,i)=>color.rgba[i]==value);
+  }
+
+  toJSON(){
+    return this.rgbaObject;
   }
 }
