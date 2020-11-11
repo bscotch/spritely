@@ -375,8 +375,8 @@ export class Spritely {
    * (ignoring metadata).
    */
   static async imagesAreEqual(imagePath1:string,imagePath2:string){
-    const [img1,img2] = await Promise
-      .all([imagePath1,imagePath2].map(img=>Image.load(img) as Promise<ImageExt>));
+    const img1 = await Image.load(imagePath1) as ImageExt;
+    const img2 = await Image.load(imagePath2) as ImageExt;
     // Start with cheap checks, then check value-by-value aborting when one fails.
     return img1.channels == img2.channels &&
       img1.bitDepth  == img2.bitDepth &&
@@ -462,7 +462,7 @@ export class Spritely {
     for(let x=0; x<image.width; x++){
       for(let y=0; y<image.height; y++){
         const currentColor = image.getPixelXY(x,y);
-        const getRelativeIntensity = (value:number)=>Math.floor(value/Math.pow(2,image.bitDepth));
+        const getRelativeIntensity = (value:number)=>value/Math.pow(2,image.bitDepth);
         if(currentColor[3]>0){
           let relativeIntensity = getRelativeIntensity(currentColor[0]);
           // (assumed to be grayscale, so that all values are the same)
@@ -470,8 +470,9 @@ export class Spritely {
             // Then this pixel isn't grayscale, so compute intensity
             relativeIntensity = getRelativeIntensity(0.2126*currentColor[0] + 0.7152*currentColor[1] + 0.0722*currentColor[2]);
           }
-          const newColor = gradient.getColorAtPosition(Math.floor(relativeIntensity*100));
-          image.setPixelXY(x,y,newColor.rgba);
+          const newPosition = Math.floor(relativeIntensity*100);
+          const newColor = gradient.getColorAtPosition(newPosition);
+          image.setPixelXY(x,y,newColor.rgb);
         }
       }
     }
