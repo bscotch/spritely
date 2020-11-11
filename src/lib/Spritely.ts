@@ -162,6 +162,27 @@ export class Spritely {
     return this;
   }
 
+  /**
+   * For each gradient map found in `{sprite}/gradmaps.yml`,
+   * create a new folder `{sprite}/{gradmapName}/` and fill it
+   * with copies of each subimage converted from Grayscale to
+   * color using the associated gradMap.
+   */
+  async applyGradientMaps(deleteReferenceImages?:boolean){
+    assert(this.getGradientMaps().length,`No gradient maps found for sprite ${this.name}`);
+    const waits = this.gradientMaps.map(async gradMap=>{
+      const destFolder = path.join(this.spriteRoot,gradMap.name);
+      await fs.ensureDir(destFolder);
+      await fs.emptyDir(destFolder);
+      for(const subimagePath of this.paths){
+        const destPath = path.join(destFolder,path.basename(subimagePath));
+        await fs.copyFile(subimagePath,destPath);
+        await Spritely.applyGradientMap(destPath,gradMap);
+      }
+    });
+    await Promise.all(waits);
+  }
+
   /** Copy this sprite (folder + subimages) to another location */
   async copy(destinationFolder:string){
     const toSpriteFolder = path.join(destinationFolder,this.name);
@@ -434,5 +455,26 @@ export class Spritely {
       grads.push(new GradientMap(name,gradients[name]));
     }
     return grads;
+  }
+
+  private static async applyGradientMap(path:string,gradient:GradientMap){
+    const image = await Image.load(path) as ImageExt;
+    for(let x=0; x<image.width; x++){
+      for(let y=0; y<image.height; y++){
+        const currentColor = image.getPixelXY(x,y);
+        const getRelativeIntensity = (value:number)=>Math.floor(value/Math.pow(2,image.bitDepth));
+        if(currentColor[3]>0){
+          let relativeIntensity = getRelativeIntensity(currentColor[0]);
+          // (assumed to be grayscale, so that all values are the same)
+          if(currentColor[0]!=currentColor[1] || currentColor[1]!=currentColor[2]){
+            // Then this pixel isn't grayscale, so compute intensity
+            relativeIntensity = getRelativeIntensity(0.2126*currentColor[0] + 0.7152*currentColor[1] + 0.0722*currentColor[2]);
+          }
+          const newColor = gradient.getColorAtPosition(Math.floor(relativeIntensity*100));
+          image.setPixelXY(x,y,newColor.rgba);
+        }
+      }
+    }
+    await image.save(path);
   }
 }

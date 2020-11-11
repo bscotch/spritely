@@ -7,7 +7,7 @@ export class GradientMap{
 
   private positions: Position[] = [];
 
-  constructor(readonly name?:string, colorMap?:{[position:string]:string}){
+  constructor(readonly name:string, colorMap?:{[position:string]:string}){
     if(colorMap){
       const positions = Object.keys(colorMap);
       for(const position of positions){

@@ -50,8 +50,8 @@ describe("Spritely", function(){
     expect(JSON.stringify(new Color('000000'))).to.equal('{"red":0,"green":0,"blue":0,"alpha":255}');
   });
 
-  it.only("can create a GradientMap", function(){
-    const grad = new GradientMap();
+  it("can create a GradientMap", function(){
+    const grad = new GradientMap('test');
     const startColor = 'eeeeee';
     const startPos = 11;
     const intermediateColor = '090909';
@@ -88,13 +88,22 @@ describe("Spritely", function(){
     ]);
   });
 
-  it.only("can load gradient maps from file", function(){
+  it("can load gradient maps from file", function(){
     const sprite = new Spritely({
       spriteDirectory: sandboxPath('gradmap'),
       allowSubimageSizeMismatch: true
     });
     const grads = sprite.getGradientMaps();
     expect(grads.length).to.equal(2);
+  });
+
+  it.only("can apply gradient maps", async function(){
+    const sprite = new Spritely({
+      spriteDirectory: sandboxPath('gradmap'),
+      allowSubimageSizeMismatch: true
+    });
+    await sprite.applyGradientMaps();
+    process.exit(1);
   });
 
   it("can create a Spritely instance from a folder of subimages", async function(){
