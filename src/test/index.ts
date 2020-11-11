@@ -102,7 +102,7 @@ describe("Spritely", function(){
       spriteDirectory: sandboxPath('gradmap'),
       allowSubimageSizeMismatch: true
     });
-    await sprite.applyGradientMaps();
+    await sprite.applyGradientMaps(true);
     const gradMapNames = sprite.getGradientMaps().map(g=>g.name);
     expect(gradMapNames.length).to.be.greaterThan(0);
     for(const gradMapName of gradMapNames){
