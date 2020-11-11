@@ -6,6 +6,7 @@ import { SpritelyError } from "../lib/errors";
 import {fixSprites} from "../cli/util";
 import { SpritelyBatch } from "../lib/SpritelyBatch";
 import { Color } from "../lib/Color";
+import { GradientMap } from "../lib/GradientMap";
 
 const sandboxRoot = "./sandbox";
 const samplesRoot = "./samples";
@@ -46,6 +47,54 @@ describe("Spritely", function(){
     expect(new Color('AaBBFf00').equalsRgb(new Color('aabbff33'))).to.be.true;
     expect(new Color('AaBBFf00').equalsRgba(new Color('aabbff33'))).to.be.false;
     expect(new Color('AaBBF000').equalsRgba(new Color('aabbff33'))).to.be.false;
+    expect(JSON.stringify(new Color('000000'))).to.equal('{"red":0,"green":0,"blue":0,"alpha":255}');
+  });
+
+  it.only("can create a GradientMap", function(){
+    const grad = new GradientMap();
+    const startColor = 'eeeeee';
+    const startPos = 11;
+    const intermediateColor = '090909';
+    const intermediatePos = 22;
+    const endColor = '222222';
+    const endPos = 99;
+    const computedPos = 44;
+    const expectedComputedPosColorValue = Math.floor(
+      (
+        (computedPos-intermediatePos)/(endPos-intermediatePos) *
+        (parseInt('22',16)-parseInt('09',16))
+      ) + parseInt('09',16)
+    );
+    grad.addPosition(intermediatePos,intermediateColor);
+    grad.addPosition(startPos,startColor);
+    grad.addPosition(endPos,endColor);
+    expect(()=>grad.addPosition(101,'000000')).to.throw();
+    expect(()=>grad.addPosition(33,'22')).to.throw();
+    expect(grad.getPositions().map(pos=>pos.position),
+      'value should be properly sorted'
+    ).to.eql([startPos,intermediatePos,endPos]);
+    // Should be able to get back the values originally put in
+    expect(grad.getColorAtPosition(0).rgbHex).to.equal(startColor);
+    expect(grad.getColorAtPosition(startPos).rgbHex).to.equal(startColor);
+    expect(grad.getColorAtPosition(100).rgbHex).to.equal(endColor);
+    expect(grad.getColorAtPosition(endPos).rgbHex).to.equal(endColor);
+    expect(grad.getColorAtPosition(intermediatePos).rgbHex).to.equal(intermediateColor);
+    // Should be able to get correct intermediate values
+    expect(grad.getColorAtPosition(computedPos).rgba).to.eql([
+      expectedComputedPosColorValue,
+      expectedComputedPosColorValue,
+      expectedComputedPosColorValue,
+      255
+    ]);
+  });
+
+  it.only("can load gradient maps from file", function(){
+    const sprite = new Spritely({
+      spriteDirectory: sandboxPath('gradmap'),
+      allowSubimageSizeMismatch: true
+    });
+    const grads = sprite.getGradientMaps();
+    expect(grads.length).to.equal(2);
   });
 
   it("can create a Spritely instance from a folder of subimages", async function(){

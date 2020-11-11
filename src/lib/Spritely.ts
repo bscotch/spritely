@@ -8,6 +8,7 @@ import {
 } from "./errors";
 import {Image} from "image-js";
 import {removeEmptyDirsSync} from "@bscotch/utility";
+import yaml from "yaml";
 
 
 // The 'image-size' module allows for synchronous operation,
@@ -15,6 +16,7 @@ import {removeEmptyDirsSync} from "@bscotch/utility";
 // but is needed since Typescript constructors are synchronous.
 import {imageSize} from "image-size";
 import { sha256 } from "./utility";
+import { GradientMap } from "./GradientMap";
 
 export type SpriteCreatedBy = 'inkscape'|'clipstudiopaint';
 export interface SpriteEdgeCorrectionOptions {
@@ -52,6 +54,7 @@ export class Spritely {
   private subimageWidth: number|undefined;
   private subimageHeight: number|undefined;
   readonly allowSubimageSizeMismatch:boolean = false;
+  private gradientMaps: GradientMap [] = [];
 
   /**
    * Create a Sprite instance using a folder full of sprite subimages.
@@ -70,6 +73,8 @@ export class Spritely {
     const {width,height} = Spritely.getSubimagesSizeSync(this.subimagePaths,this.allowSubimageSizeMismatch);
     this.subimageWidth = width;
     this.subimageHeight = height;
+
+    this.loadGradientMaps();
   }
 
   /** The name of this sprite (its folder name) */
@@ -96,6 +101,10 @@ export class Spritely {
    */
   get checksums(): Promise<string[]>{
     return Promise.all(this.paths.map(imagePath=>Spritely.pixelsChecksum(imagePath)));
+  }
+
+  getGradientMaps(){
+    return [...this.gradientMaps];
   }
 
   /** Check if two sprites are exactly equal (have the same subimages) */
@@ -185,6 +194,20 @@ export class Spritely {
   async move(destinationFolder:string){
     await this.copy(destinationFolder);
     await this.delete();
+  }
+
+  private loadGradientMaps(){
+    const possibleFileNames = ['gradmaps','gradients','gradmap'];
+    const possibleExtensions = ['yml','yaml','txt'];
+    for(const possibleFileName of possibleFileNames){
+      for(const possibleExtension of possibleExtensions){
+        const filename = path.join(this.spriteRoot,`${possibleFileName}.${possibleExtension}`);
+        if(fs.existsSync(filename)){
+          this.gradientMaps.push(...Spritely.gradientMapsFromFile(filename));
+        }
+      }
+    }
+    return this.gradientMaps;
   }
 
   /**
@@ -392,5 +415,24 @@ export class Spritely {
       top:    top   ==  Infinity ? 0 : top,
       bottom: bottom== -Infinity ? foreground.height-1 : bottom
     };
+  }
+
+  /**
+   * Get a list of GradientMaps from a file, with expected format (per line):
+   * `gradient-name: position1, colorHex1; position2, colorHex2`
+   * Where there can be extra space padding, 'gradient-name' should be forced
+   * to kebab case, 'positions' are numbers from 0-100 representing position
+   * along the grayscale pallette, and 'colorHex' are RGB colors in hex format.
+   */
+  private static gradientMapsFromFile(filepath:string){
+    assert(fs.existsSync(filepath),`GradientMap file '${filepath}' does not exist.`);
+    const gradients = yaml.parse(fs.readFileSync(filepath,'utf8')) as {[name:string]:{[position:string]:string}};
+    const names = Object.keys(gradients);
+    assert(names.length,'No gradient definitions found in file');
+    const grads: GradientMap[] = [];
+    for(const name of names){
+      grads.push(new GradientMap(name,gradients[name]));
+    }
+    return grads;
   }
 }
