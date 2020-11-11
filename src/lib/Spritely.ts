@@ -45,6 +45,12 @@ interface SpritelyOptions {
    * unpredicatable.
    */
   allowSubimageSizeMismatch?: boolean,
+  /**
+   * By default, Spritely instances search for a gradmap file
+   * inside the sprite's directory. You can instead specify
+   * a gradient map file to be used.
+   */
+  gradientMapsFile?: string,
 }
 
 export class Spritely {
@@ -61,20 +67,19 @@ export class Spritely {
    * @param options Either the path to the sprite folder, or a SpritelyOptions object
    */
   constructor(options?:string|SpritelyOptions){
-    this.spriteRoot = typeof options == 'string'
-      ? options
-      : options?.spriteDirectory || process.cwd();
+    options = typeof options == 'string'
+      ? {spriteDirectory: options}
+      : options || {};
+    this.spriteRoot = options.spriteDirectory || process.cwd();
     assertDirectoryExists(this.spriteRoot);
-    if(typeof options != 'string'){
-      this.allowSubimageSizeMismatch = Boolean(options?.allowSubimageSizeMismatch);
-    }
+    this.allowSubimageSizeMismatch = Boolean(options.allowSubimageSizeMismatch);
 
     this.subimagePaths = Spritely.getSubimages(this.spriteRoot);
     const {width,height} = Spritely.getSubimagesSizeSync(this.subimagePaths,this.allowSubimageSizeMismatch);
     this.subimageWidth = width;
     this.subimageHeight = height;
 
-    this.loadGradientMaps();
+    this.loadGradientMaps(options.gradientMapsFile);
   }
 
   /** The name of this sprite (its folder name) */
@@ -184,6 +189,7 @@ export class Spritely {
       }
     });
     await Promise.all(waits);
+    return this;
   }
 
   /** Copy this sprite (folder + subimages) to another location */
@@ -196,6 +202,7 @@ export class Spritely {
       newPaths.push(newPath);
       fs.copyFileSync(subimagePath,newPath);
     }
+    return this;
   }
 
   /**
@@ -210,6 +217,7 @@ export class Spritely {
     // Attempt to remove the folders (and clean recursively)
     removeEmptyDirsSync(this.spriteRoot);
     this.subimagePaths = [];
+    return this;
   }
 
   /**
@@ -218,17 +226,20 @@ export class Spritely {
   async move(destinationFolder:string){
     await this.copy(destinationFolder);
     await this.delete();
+    return this;
   }
 
-  private loadGradientMaps(){
-    const possibleFileNames = ['gradmaps','gradients','gradmap'];
-    const possibleExtensions = ['yml','yaml','txt'];
-    for(const possibleFileName of possibleFileNames){
-      for(const possibleExtension of possibleExtensions){
-        const filename = path.join(this.spriteRoot,`${possibleFileName}.${possibleExtension}`);
-        if(fs.existsSync(filename)){
-          this.gradientMaps.push(...Spritely.gradientMapsFromFile(filename));
-        }
+  private loadGradientMaps(gradientMapsFile?:string){
+    const defaultNames = ['gradmaps','gradients','gradmap']
+      .map(name=>['yml','yaml','txt'].map(ext=>`${name}.${ext}`))
+      .flat(2)
+      .map(filename=>path.join(this.spriteRoot,filename));
+    const fileNames = gradientMapsFile
+      ? [gradientMapsFile]
+      : defaultNames;
+    for(const filename of fileNames){
+      if(fs.existsSync(filename)){
+        this.gradientMaps.push(...Spritely.gradientMapsFromFile(filename));
       }
     }
     return this.gradientMaps;

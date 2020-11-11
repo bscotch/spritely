@@ -19,6 +19,7 @@ project, solving a few key problems:
 
 + Edge interpolation artifacts (faint outlines around rendered sprites)
 + Excessive padding (increases compiling time)
++ Recoloring via Gradient Maps
 
 ### Bleed: Remove edge interpolation artifacts
 
@@ -71,9 +72,59 @@ sprite. Panel <b>B</b> shows how Spritely creates a bounding box taking the
 content position of all subimages into account, with panel <b>C</b> showing the
 cropped output.
 
+### Gradient Maps
+
+Clip Studio Paint, Photoshop, and other art creation software provide
+a "Gradient Map" concept. The idea is to start with a grayscale art asset,
+and then map positions along that grayscale spectrum onto colors, with
+computed values in between those positions making up the 'gradient'.
+
+Spritely can batch-apply any number of gradient maps to your sprites.
+Sprite subimages are *assumed* to be in grayscale, but any pixels that
+are *not* grayscale (i.e. the RGB values differ from one another) are
+converted to grayscale before applying the gradient map.
+
+(If you have an
+image that has a combination of grayscale and non-grayscale pixels,
+you may get unexpected results.)
+
+Provide gradient maps with a YAML file describing each mapping and its
+positional values. Positions are integers from 0-100, and colors are
+hexadecimal strings.
+
+```yml
+# Each gradient map has its own name, which is used
+# to name the output folder.
+
+map-name-1:
+  0: '000000' # Position 0 is the lowest you can go.
+            # No positions (including 0) are required.
+            # All positions must be integers from 0-100
+            # In this case we're using black.
+            # (Hex values with leading zeros and only numbers
+            # must be wrapped in quotes.)
+  10: abcdef # E.g. at position 10 use rgb(171, 205, 239)
+  100: ffffff # E.g. at the last position use white.
+
+# Adding another gradient map will cause another folder
+# of recolored images to appear.
+map-name-2:
+  # ... etc.
+```
+
+If Spritely finds a file named `gradmaps.yml` inside a sprite folder,
+it will assume that it is a collection of gradient maps with format
+given above, and those will be available for creating recolored images
+of that sprite.
+
+Alternatively, you can tell Spritely to use a different file of
+Gradient Maps.
+
+
 ## Installation
 
-Requires [Node.js 14+](https://nodejs.org/en/).
++ Requires [Node.js 14+](https://nodejs.org/en/).
++ Only tested on Windows 10.
 
 In a terminal, run `npm install --global @bscotch/spritely`
 
@@ -83,8 +134,12 @@ In a terminal, run `npm install --global @bscotch/spritely`
 
 In order to correct your sprite subimages, they must be organized
 into one folder per sprite, each containing the subimages making
-up that sprite as immediate PNG children. **All subimages must have
-the exact same dimensions.**
+up that sprite as immediate PNG children.
+
+By default, it is assumed that all subimages of a sprite should have
+identical dimensions, and errors will be thrown if that isn't true.
+You can bypass this assumption via the CLI or programmatic use of
+Spritely.
 
 For example, you might have a sprite called `enemy` with three
 subimages to create a run cycle. You would save these like this:
@@ -133,7 +188,7 @@ make sure you have backups!):
 + `spritely crop -r -f enemy` is shorthand for the same thing
 + `spritely crop -f "C:\User\Me\Desktop\enemy"` provides an *absolute* path if you are not currently in the parent folder of the `enemy` folder.
 + `spritely bleed -f enemy` outlines the important parts of `enemy/enemy-idle.png` and `enemy/enemy-run.png` with nearly-transparent pixels to improve interpolation for subpixel camera positioning.
-+ `spritely fix -f enemy` crops and bleed the `enemy` sprite.
++ `spritely fix -f enemy` crops and bleeds the `enemy` sprite.
 + `spritely fix -f enemy --move somewhere/else` moves the sprite to `somewhere/else` after
   it has been processed. Also works recursively, with path provided to `--move` being used
   as the root directory. Note that old subimages in the target directory **are deleted** prior
@@ -160,6 +215,11 @@ make sure you have backups!):
   the way you expect most of the time. For example, with pattern `hello` you'd match
   `folder/with/all/your/sprites/helloworld` and `folder/with/all/your/sprites/ohhello`,
   but would not match `folder/with/all/your/sprites/different_top_level/hello`.
++ `spritely gradmap -r -f sprites/to/recolor --gradient-maps-file my-map.yml` 
+  applies the gradient maps found in `my-map.yml` to every sprite found in `sprites/to/recolor`
+  (recursively). Because application of gradient maps causes new sprites to be
+  created, this CLI command has fewer options than the others and should be used
+  with care.
 
 ### Programmatic Usage
 
@@ -184,6 +244,7 @@ async function myPipeline(){
   // use async/await syntax
   await sprite.crop();
   await sprite.bleed();
+  await sprite.applyGradientMaps();
 
   // or use .then() syntax
   sprite.crop().then(cropped=>cropped.bleed());
