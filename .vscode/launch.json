@@ -7,22 +7,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Tests",
-            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-            "args": [
-                "--require", "source-map-support/register",
-                "--timeout", "999999",
-                "--colors",
-                "${workspaceFolder}/build/test/index.js"
-            ],
-            "console": "internalConsole",
-            "internalConsoleOptions": "neverOpen",
-            "protocol": "inspector",
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Tests (ts-node)",
+            "name": "Spritely Tests (via ts-node)",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
                 "--require", "ts-node/register",
@@ -32,7 +17,22 @@
             ],
             "console": "internalConsole",
             "internalConsoleOptions": "neverOpen",
-            "protocol": "inspector",
+            "protocol": "inspector"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Spritely Tests (requires compile)",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "args": [
+                "--require", "source-map-support/register",
+                "--timeout", "999999",
+                "--colors",
+                "${workspaceFolder}/build/test/index.js"
+            ],
+            "console": "internalConsole",
+            "internalConsoleOptions": "neverOpen",
+            "protocol": "inspector"
         }
     ]
 }
