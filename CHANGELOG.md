@@ -1,3 +1,13 @@
+# [1.3.0](https://github.com/bscotch/spritely/compare/v1.2.1...v1.3.0) (2020-11-13)
+
+
+### Features
+
+* The 'gradmap' CLI command is now an alias for the 'skin' command, which is easier to grok. ([4f3d597](https://github.com/bscotch/spritely/commit/4f3d597fab2f2cbdc88962e16f468235a1b54dff))
+* The gradient-map files for skinning now have a different (backwards-incompatible) format, allowing for re-use of skins based on image filename. ([fe22df2](https://github.com/bscotch/spritely/commit/fe22df2be6aa6fbd0f311f1e56529a7a5e9bb073)), closes [#19](https://github.com/bscotch/spritely/issues/19)
+
+
+
 ## [1.2.1](https://github.com/bscotch/spritely/compare/v1.2.0...v1.2.1) (2020-11-11)
 
 
