@@ -19,7 +19,7 @@ project, solving a few key problems:
 
 + Edge interpolation artifacts (faint outlines around rendered sprites)
 + Excessive padding (increases compiling time)
-+ Recoloring via Gradient Maps
++ Re-skinning via Gradient Maps
 
 ### Bleed: Remove edge interpolation artifacts
 
@@ -72,7 +72,7 @@ sprite. Panel <b>B</b> shows how Spritely creates a bounding box taking the
 content position of all subimages into account, with panel <b>C</b> showing the
 cropped output.
 
-### Gradient Maps
+### Gradient Maps (a.k.a. "Skins")
 
 Clip Studio Paint, Photoshop, and other art creation software provide
 a "Gradient Map" concept. The idea is to start with a grayscale art asset,
@@ -86,6 +86,7 @@ converted to grayscale before applying the gradient map.
 
 (If you have an
 image that has a combination of grayscale and non-grayscale pixels,
+or are otherwise mapping from a non-grayscale image,
 you may get unexpected results.)
 
 Provide gradient maps with a YAML file describing each mapping and its
@@ -93,31 +94,42 @@ positional values. Positions are integers from 0-100, and colors are
 hexadecimal strings.
 
 ```yml
-# Each gradient map has its own name, which is used
-# to name the output folder.
+# "Skins" are the gradient mappings. Each one ends up being a folder
+# into which mapped images are placed. There is an implicit "default"
+# skin that doesn't do anything.
+skins:
+  flux:
+    0: "000000"
+    100: "ffffff"
+  spooky:
+    0: "ff0000"
+    0: "ff00ff"
 
-map-name-1:
-  0: '000000' # Position 0 is the lowest you can go.
-            # No positions (including 0) are required.
-            # All positions must be integers from 0-100
-            # In this case we're using black.
-            # (Hex values with leading zeros and only numbers
-            # must be wrapped in quotes.)
-  10: abcdef # E.g. at position 10 use rgb(171, 205, 239)
-  100: ffffff # E.g. at the last position use white.
-
-# Adding another gradient map will cause another folder
-# of recolored images to appear.
-map-name-2:
-  # ... etc.
+# "Groups" are collections of images to which skins are applied.
+# If no groups are provided, all skins are assumed to apply to all images.
+# If *any* groups are provided, images will only be skinned if they match a group.
+# Matching patterns are regex, and must be directly usable by JavaScript's `new RegExp()` method. They are tested against the image filename.
+# Case is always ignored. An image could land in multiple groups, and in that case
+# will be skinned with the skins from all matching groups. Groups have no impact on
+# output location or filename. Images that land in no groups are copied into the "none"
+# skin folder, without being changed.
+groups:
+  - pattern: "^faceplate_" # Matches all image names starting with `faceplate_`
+    skins:
+      - "flux"
+      - "spooky"
+  - pattern: "^(?!eyes_)" # Matches anything that *doesn't* start with `eyes_` (using negative lookahead)
+    skins:
+      - "spooky"
 ```
 
-If Spritely finds a file named `gradmaps.yml` inside a sprite folder,
+If Spritely finds a file named `skins.yml` or `gradmaps.yml` 
+(or one of a few similar variants) inside a sprite folder,
 it will assume that it is a collection of gradient maps with format
 given above, and those will be available for creating recolored images
 of that sprite.
 
-Alternatively, you can tell Spritely to use a different file of
+Alternatively, you can explicitly specify that Spritely use a different file of
 Gradient Maps.
 
 
@@ -215,7 +227,7 @@ make sure you have backups!):
   the way you expect most of the time. For example, with pattern `hello` you'd match
   `folder/with/all/your/sprites/helloworld` and `folder/with/all/your/sprites/ohhello`,
   but would not match `folder/with/all/your/sprites/different_top_level/hello`.
-+ `spritely gradmap -r -f sprites/to/recolor --gradient-maps-file my-map.yml` 
++ `spritely skin -r -f sprites/to/recolor --gradient-maps-file my-map.yml` 
   applies the gradient maps found in `my-map.yml` to every sprite found in `sprites/to/recolor`
   (recursively). Because application of gradient maps causes new sprites to be
   created, this CLI command has fewer options than the others and should be used

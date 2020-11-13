@@ -18,6 +18,18 @@ import {imageSize} from "image-size";
 import { sha256 } from "./utility";
 import { GradientMap } from "./GradientMap";
 
+interface GradientMapsFile {
+  skins: {
+    [name: string]: {
+      [position: number]: string
+    }
+  },
+  groups?:{
+    pattern: string,
+    skins: string|string[]
+  }[]
+}
+
 export type SpriteCreatedBy = 'inkscape'|'clipstudiopaint';
 export interface SpriteEdgeCorrectionOptions {
   /**
@@ -60,7 +72,7 @@ export class Spritely {
   private subimageWidth: number|undefined;
   private subimageHeight: number|undefined;
   readonly allowSubimageSizeMismatch:boolean = false;
-  private gradientMaps: GradientMap [] = [];
+  readonly gradientMapsFile?: string;
 
   /**
    * Create a Sprite instance using a folder full of sprite subimages.
@@ -78,8 +90,7 @@ export class Spritely {
     const {width,height} = Spritely.getSubimagesSizeSync(this.subimagePaths,this.allowSubimageSizeMismatch);
     this.subimageWidth = width;
     this.subimageHeight = height;
-
-    this.loadGradientMaps(options.gradientMapsFile);
+    this.gradientMapsFile = options.gradientMapsFile;
   }
 
   /** The name of this sprite (its folder name) */
@@ -106,10 +117,6 @@ export class Spritely {
    */
   get checksums(): Promise<string[]>{
     return Promise.all(this.paths.map(imagePath=>Spritely.pixelsChecksum(imagePath)));
-  }
-
-  getGradientMaps(){
-    return [...this.gradientMaps];
   }
 
   /** Check if two sprites are exactly equal (have the same subimages) */
@@ -174,21 +181,26 @@ export class Spritely {
    * color using the associated gradMap.
    */
   async applyGradientMaps(deleteSourceImages?:boolean){
-    assert(this.getGradientMaps().length,`No gradient maps found for sprite ${this.name}`);
-    const waits = this.gradientMaps.map(async gradMap=>{
-      const destFolder = path.join(this.spriteRoot,gradMap.name);
+    const gradientMaps:[string,...GradientMap[]] = ['none',...this.getGradientMaps()];
+    const waits = gradientMaps.map(async gradMap=>{
+      const destFolder = path.join(
+        this.spriteRoot,
+        typeof gradMap=='string'?gradMap:gradMap.name
+      );
       await fs.ensureDir(destFolder);
       await fs.emptyDir(destFolder);
       for(const subimagePath of this.paths){
         const destPath = path.join(destFolder,path.basename(subimagePath));
         await fs.copyFile(subimagePath,destPath);
-        await Spritely.applyGradientMap(destPath,gradMap);
-        if(deleteSourceImages){
-          await fs.remove(subimagePath);
+        if(typeof gradMap != 'string'){
+          await Spritely.applyGradientMap(destPath,gradMap);
         }
       }
     });
     await Promise.all(waits);
+    if(deleteSourceImages){
+      this.paths.forEach(p=>fs.removeSync(p));
+    }
     return this;
   }
 
@@ -229,20 +241,21 @@ export class Spritely {
     return this;
   }
 
-  private loadGradientMaps(gradientMapsFile?:string){
-    const defaultNames = ['gradmaps','gradients','gradmap']
+  getGradientMaps(){
+    const defaultNames = ['gradmaps','gradients','gradmap','skins','skin']
       .map(name=>['yml','yaml','txt'].map(ext=>`${name}.${ext}`))
       .flat(2)
       .map(filename=>path.join(this.spriteRoot,filename));
-    const fileNames = gradientMapsFile
-      ? [gradientMapsFile]
+    const fileNames = this.gradientMapsFile
+      ? [this.gradientMapsFile]
       : defaultNames;
+    const gradientMaps = [];
     for(const filename of fileNames){
       if(fs.existsSync(filename)){
-        this.gradientMaps.push(...Spritely.gradientMapsFromFile(filename));
+        gradientMaps.push(...this.getGradientMapsFromFile(filename));
       }
     }
-    return this.gradientMaps;
+    return gradientMaps;
   }
 
   /**
@@ -459,16 +472,43 @@ export class Spritely {
    * to kebab case, 'positions' are numbers from 0-100 representing position
    * along the grayscale pallette, and 'colorHex' are RGB colors in hex format.
    */
-  private static gradientMapsFromFile(filepath:string){
+  private getGradientMapsFromFile(filepath:string){
     assert(fs.existsSync(filepath),`GradientMap file '${filepath}' does not exist.`);
-    const gradients = yaml.parse(fs.readFileSync(filepath,'utf8')) as {[name:string]:{[position:string]:string}};
-    const names = Object.keys(gradients);
-    assert(names.length,'No gradient definitions found in file');
-    const grads: GradientMap[] = [];
-    for(const name of names){
-      grads.push(new GradientMap(name,gradients[name]));
+    const skinInfo = yaml.parse(fs.readFileSync(filepath,'utf8')) as GradientMapsFile;
+    const allSkins = Object.keys(skinInfo.skins);
+    if(!allSkins.length){
+      return [];
     }
-    return grads;
+    // Use the 'groups' section to determine which filters apply to *this* image
+    const applicableSkins:string[] = [];
+    if(!skinInfo.groups || !skinInfo.groups.length){
+      applicableSkins.push(...allSkins);
+    }
+    else{
+      for(const group of skinInfo.groups){
+        const skins = typeof group.skins=='string' ? [group.skins] : group.skins;
+        assert(Array.isArray(skins),
+          'All groups must have a valid "skins" field.');
+        if(!skins.length){
+          continue;
+        }
+        assert(group.pattern && typeof group.pattern=='string',
+          'All groups must have a valid "pattern" field.');
+        const pattern = new RegExp(group.pattern,'i');
+        if(this.name.match(pattern)){
+          skins.forEach(skin=>{
+            assert(allSkins.includes(skin),
+              `Skin ${skin} was used in a group but is not defined.`);
+            if(!applicableSkins.includes(skin)){
+              applicableSkins.push(skin);
+            }
+          });
+        }
+      }
+    }
+    return applicableSkins.map(skin=>{
+      return new GradientMap(skin,skinInfo.skins[skin]);
+    });
   }
 
   private static async applyGradientMap(path:string,gradient:GradientMap){
