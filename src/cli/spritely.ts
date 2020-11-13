@@ -13,7 +13,7 @@ cli.description('Spritely: Image correction and cleanup for 2D game sprites')
   .command("crop",  oneline`
     Autocrop the subimages of a sprite while maintaining relative positions.
   `)
-  .command("gradmap", oneline`
-    Use gradient maps to create sprite variants.
-  `)
+  .command("skin", oneline`
+    Use gradient maps to create reskinned sprites.
+  `).alias('gradmap')
   .parse();
