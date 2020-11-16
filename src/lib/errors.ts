@@ -1,9 +1,8 @@
 import fs from "fs-extra";
 
 function logThrownError(error:Error|SpritelyError){
-  fs.appendFileSync('spritely.log',error?.stack||error.message);
-  console.log(error.message,'(see spritely.log for more info');
-  process.exit(1);
+  fs.appendFileSync('node.error.log',error?.stack||error.message);
+  throw error;
 }
 
 process.on('unhandledRejection', logThrownError);
