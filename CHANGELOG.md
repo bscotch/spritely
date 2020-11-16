@@ -1,3 +1,12 @@
+## [1.3.1](https://github.com/bscotch/spritely/compare/v1.3.0...v1.3.1) (2020-11-16)
+
+
+### Features
+
+* Uncaught errors are no longer swallowed by Spritely. This was being used to write to errors to file for convenience, but has the side effect of swalling errors in projects depending on Spritely. ([a0da00f](https://github.com/bscotch/spritely/commit/a0da00fe178bb51cac0b750785f96c82a1589e84))
+
+
+
 # [1.3.0](https://github.com/bscotch/spritely/compare/v1.2.1...v1.3.0) (2020-11-13)
 
 
