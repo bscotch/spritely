@@ -7,13 +7,30 @@ export class GradientMap{
 
   private positions: Position[] = [];
 
-  constructor(readonly name:string, colorMap?:{[position:string]:string}){
+  constructor(readonly name:string, colorMap?:{[position:string]:string}, private ifNameMatches?:{match?:'subimage'|'sprite',pattern:RegExp}[]){
     if(colorMap){
       const positions = Object.keys(colorMap);
       for(const position of positions){
         this.addPosition(Number(position),colorMap[position]);
       }
     }
+  }
+
+  /**
+   * If `ifNameMatches` regexes supplied on instancing, can check
+   * a given string (e.g. filename) to see if it matches any of those
+   * patterns.
+   */
+  canApplyToImage(spriteName:string,subimageName:string){
+    if(!this.ifNameMatches || !this.ifNameMatches.length){
+      return true;
+    }
+    return this.ifNameMatches.some(matcher=>{
+      if(matcher.match=='sprite'){
+        return spriteName.match(matcher.pattern);
+      }
+      return subimageName.match(matcher.pattern);
+    });
   }
 
   addPosition(position:number,colorHex:string){

@@ -26,7 +26,8 @@ interface GradientMapsFile {
   },
   groups?:{
     pattern: string,
-    skins: string|string[]
+    skins: string|string[],
+    match?: 'sprite'|'subimage'
   }[]
 }
 
@@ -190,6 +191,10 @@ export class Spritely {
       await fs.ensureDir(destFolder);
       await fs.emptyDir(destFolder);
       for(const subimagePath of this.paths){
+        // Only change if matches pattern
+        if(typeof gradMap != 'string' && !gradMap.canApplyToImage(this.name,path.parse(subimagePath).name)){
+          continue;
+        }
         const destPath = path.join(destFolder,path.basename(subimagePath));
         await fs.copyFile(subimagePath,destPath);
         if(typeof gradMap != 'string'){
@@ -475,40 +480,24 @@ export class Spritely {
   private getGradientMapsFromFile(filepath:string){
     assert(fs.existsSync(filepath),`GradientMap file '${filepath}' does not exist.`);
     const skinInfo = yaml.parse(fs.readFileSync(filepath,'utf8')) as GradientMapsFile;
-    const allSkins = Object.keys(skinInfo.skins);
-    if(!allSkins.length){
-      return [];
-    }
-    // Use the 'groups' section to determine which filters apply to *this* image
-    const applicableSkins:string[] = [];
-    if(!skinInfo.groups || !skinInfo.groups.length){
-      applicableSkins.push(...allSkins);
-    }
-    else{
-      for(const group of skinInfo.groups){
-        const skins = typeof group.skins=='string' ? [group.skins] : group.skins;
-        assert(Array.isArray(skins),
-          'All groups must have a valid "skins" field.');
-        if(!skins.length){
-          continue;
-        }
-        assert(group.pattern && typeof group.pattern=='string',
-          'All groups must have a valid "pattern" field.');
-        const pattern = new RegExp(group.pattern,'i');
-        if(this.name.match(pattern)){
-          skins.forEach(skin=>{
-            assert(allSkins.includes(skin),
-              `Skin ${skin} was used in a group but is not defined.`);
-            if(!applicableSkins.includes(skin)){
-              applicableSkins.push(skin);
-            }
+    const skins = Object.keys(skinInfo.skins);
+    return skins.map(skin=>{
+      const colorMap = skinInfo.skins[skin];
+      const patterns = !skinInfo.groups || !skinInfo.groups.length
+        ? true
+        : skinInfo.groups
+          .filter(group=>group.skins.includes(skin))
+          .map(group=>{
+            return {
+              pattern: new RegExp(group.pattern,'i'),
+              match: group.match || 'subimage'
+            };
           });
-        }
+      if(Array.isArray(patterns) && !patterns.length){
+        return false;
       }
-    }
-    return applicableSkins.map(skin=>{
-      return new GradientMap(skin,skinInfo.skins[skin]);
-    });
+      return new GradientMap(skin,colorMap,patterns===true?[]:patterns);
+    }).filter(x=>x) as GradientMap[];
   }
 
   private static async applyGradientMap(path:string,gradient:GradientMap){

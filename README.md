@@ -108,13 +108,14 @@ skins:
 # "Groups" are collections of images to which skins are applied.
 # If no groups are provided, all skins are assumed to apply to all images.
 # If *any* groups are provided, images will only be skinned if they match a group.
-# Matching patterns are regex, and must be directly usable by JavaScript's `new RegExp()` method. They are tested against the image filename.
+# Matching patterns are regex, and must be directly usable by JavaScript's `new RegExp()` method. They are tested against the image filename (not the parent folder/sprite).
 # Case is always ignored. An image could land in multiple groups, and in that case
 # will be skinned with the skins from all matching groups. Groups have no impact on
 # output location or filename. Images that land in no groups are copied into the "none"
 # skin folder, without being changed.
 groups:
   - pattern: "^faceplate_" # Matches all image names starting with `faceplate_`
+    match: 'subimage' # Checks pattern against subimage name by default. Can be set to "sprite" to test at sprite level.
     skins:
       - "flux"
       - "spooky"
