@@ -1,3 +1,12 @@
+# [1.4.0](https://github.com/bscotch/spritely/compare/v1.3.1...v1.4.0) (2020-11-17)
+
+
+### Features
+
+* GradientMaps are now applied at the subimage level by default, but can be optionally applied at the sprite level. BREAKING. ([5da798f](https://github.com/bscotch/spritely/commit/5da798fcf13c5ea182da84a41670a0eecc5d7a05))
+
+
+
 ## [1.3.1](https://github.com/bscotch/spritely/compare/v1.3.0...v1.3.1) (2020-11-16)
 
 
