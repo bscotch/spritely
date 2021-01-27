@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { oneline } from "@bscotch/utility";
 import cli from "commander";
-import {cliOptions, SpritelyCliGeneralOptions,fixSprites} from "./util";
+import {cliOptions, SpritelyCliGeneralOptions,runFixer} from "./util";
 
 async function runCliCommand(){
   cli.description('Spritely: Apply gradient maps')
@@ -19,7 +19,7 @@ async function runCliCommand(){
     `)
     .parse();
 
-  await fixSprites(['applyGradientMaps'],cli.opts() as SpritelyCliGeneralOptions);
+  await runFixer(['applyGradientMaps'],cli.opts() as SpritelyCliGeneralOptions);
 }
 
 runCliCommand();

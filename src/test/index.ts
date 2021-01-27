@@ -3,7 +3,7 @@ import {Spritely} from "../lib/Spritely";
 import fs from "fs-extra";
 import path from "path";
 import { SpritelyError } from "../lib/errors";
-import {fixSprites} from "../cli/util";
+import {runFixer} from "../cli/util";
 import { SpritelyBatch } from "../lib/SpritelyBatch";
 import { Color } from "../lib/Color";
 import { GradientMap } from "../lib/GradientMap";
@@ -238,14 +238,14 @@ describe("Spritely", function(){
     };
     const startingChecksums = await getChecksums();
     expect(startingChecksums.length,'should be starting with two images').to.equal(2);
-    await fixSprites('crop',{folder: sandboxPath('dir'),recursive:true});
+    await runFixer('crop',{folder: sandboxPath('dir'),recursive:true});
     const endingChecksums = await getChecksums();
     expect(startingChecksums).to.not.eql(endingChecksums);
   });
 
   it("CLI commands can move root images into sprite folders",async function(){
     const folder = sandboxPath('dir');
-    await fixSprites('crop',{folder,recursive:true,rootImagesAreSprites:true});
+    await runFixer('crop',{folder,recursive:true,rootImagesAreSprites:true});
     expect(fs.existsSync(path.join(folder,'invalid-1.png')),
       'root images should no longer exist'
     ).to.be.false;
@@ -257,7 +257,7 @@ describe("Spritely", function(){
     ).to.be.true;
   });
 
-  it.only("CLI commands can be overridden by name suffixes", async function(){
+  it("CLI commands can be overridden by name suffixes", async function(){
     // Use CLI to apply CROP
     // Use suffix to BLOCK CROP and ADD BLEED
     // Should then look like a bled-only reference.
@@ -268,9 +268,10 @@ describe("Spritely", function(){
       folder,
       recursive:true,
       purgeTopLevelFolders:true,
-      move: sandboxPath(movedFolderName)
+      move: sandboxPath(movedFolderName),
+      watch: true
     };
-    await fixSprites('crop',options);
+    await runFixer('crop',options);
     const bledEqualsReference = await Spritely.imagesAreEqual(
       sandboxPath(movedFolderName,'layer','otherLayer','pearl','pearl.png'),
       samplesPath('bled','pearl.png')
@@ -286,7 +287,7 @@ describe("Spritely", function(){
       recursive: true,
       purgeTopLevelFolders: true,
     };
-    await fixSprites(['crop','bleed'],options);
+    await runFixer(['crop','bleed'],options);
     // Should be able to load the sprite from where it was moved
     new Spritely(sandboxPath('moved','subdir','subsubdir'));
     // Should get errors when trying to get the original sprite
@@ -294,7 +295,7 @@ describe("Spritely", function(){
   });
 
   it("can crop sprites with differently-sized subimages", async function(){
-    await fixSprites(['crop'],{
+    await runFixer(['crop'],{
       folder: sandboxPath('invalid-subimages'),
       allowSubimageSizeMismatch: true
     });
@@ -313,7 +314,7 @@ describe("Spritely", function(){
       recursive: true,
       ifMatch: "(cropped|tile_)"
     };
-    await fixSprites('crop',options);
+    await runFixer('crop',options);
     for(const shouldBeFixed of ['cropped','tile_grass','tile_water']){
       expect(fs.existsSync(sandboxPath('filtered',shouldBeFixed)),
         'folders matching patterns should be moved'

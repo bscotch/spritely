@@ -10,6 +10,7 @@ import { Spritely } from "../lib/Spritely";
 import path from "path";
 import fs from "fs-extra";
 import { assert } from "../lib/errors";
+import chokidar from "chokidar";
 
 export interface SpritelyCliGeneralOptions {
   folder: string,
@@ -21,6 +22,7 @@ export interface SpritelyCliGeneralOptions {
   ifMatch?: string,
   deleteSource?: boolean,
   gradientMapsFile?: string,
+  watch?: boolean,
 }
 
 export const cliOptions = {
@@ -39,6 +41,13 @@ export const cliOptions = {
       USE WITH CAUTION!
       Each folder with immediate PNG children is treated as a sprite,
       with those children as its subimages.`
+  ],
+  watch: [
+    "-w --watch",
+    oneline`
+      Watch the source path for the the appearance of, or changes to,
+      PNG files. When those events occur, re-run the fixers.
+    `
   ],
   mismatch: [
     "-a --allow-subimage-size-mismatch",
@@ -83,6 +92,7 @@ export const cliOptions = {
 export function addGeneralOptions(cli: typeof commander){
   cli.option(...cliOptions.folder)
     .option(...cliOptions.recursive)
+    .option(...cliOptions.watch)
     .option(...cliOptions.mismatch)
     .option(...cliOptions.move)
     .option(...cliOptions.purge)
@@ -191,7 +201,9 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
     console.log(`Cleaned sprite "${spriteDir}".`);
   }
   catch(err){
-    console.log(`Sprite clean failed for "${spriteDir}".`,err?.message);
+    if(!options.recursive || err.message != 'No subimages found'){
+      console.log(`Sprite clean failed for "${spriteDir}".`,err?.message);
+    }
   }
 }
 
@@ -205,8 +217,7 @@ function rootDir(fullpath:string,relativeTo='.'){
   return path.relative(relativeTo,fullpath).split(/[\\/]/g)[0];
 }
 
-
-export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],options: SpritelyCliGeneralOptions){
+async function fixSprites (method:SpritelyFixMethod|SpritelyFixMethod[],options: SpritelyCliGeneralOptions){
   if(options.rootImagesAreSprites){
     // Find any root-level PNGs and move them into a folder by the same name
     const rootImages = listFilesByExtensionSync(options.folder,'png',false);
@@ -250,6 +261,40 @@ export async function fixSprites(method:SpritelyFixMethod|SpritelyFixMethod[],op
   }
   await fixSpriteDirs(method,spriteDirs,options);
   if(options.move){
-    removeEmptyDirsSync(options.folder);
+    removeEmptyDirsSync(options.folder,{excludeRoot:true});
   }
+}
+
+/** Prepare and run sprite fixers, include setting up watchers if needed. */
+export async function runFixer(method:SpritelyFixMethod|SpritelyFixMethod[],options: SpritelyCliGeneralOptions){
+  let running = false;
+  const run = async ()=>{
+    // Prevent overlapping runs
+    if(running){ return; }
+    running = true;
+    try{
+      await fixSprites(method,options);
+    }
+    catch(err){
+      console.log(err);
+    }
+    running = false;
+  };
+  await run();
+  if( ! options.watch){
+    return;
+  }
+  // Set up the watcher
+  // Glob patterns need to have posix separators
+  const pattern = path.join(options.folder,"**","*.png")
+    .split(path.sep).join(path.posix.sep);
+  const watcher = chokidar.watch(pattern,{
+    // awaitWriteFinish: {
+    //   stabilityThreshold: 2000,
+    //   pollInterval: 100
+    // }
+  });
+  watcher
+    .on('add', run)
+    .on('change', run);
 }
