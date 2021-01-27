@@ -1,3 +1,13 @@
+# [1.5.0](https://github.com/bscotch/spritely/compare/v1.4.0...v1.5.0) (2021-01-27)
+
+
+### Features
+
+* Add option to suffix sprite names with CLI method overrides. This makes it easier to add exceptions to batch operations. ([57e5171](https://github.com/bscotch/spritely/commit/57e517116aa36df6e0f5c9df44c5ae1e9db1af02))
+* Have sprites that use suffixes to force CLI methods get renamed upon method application, to remove the suffix. ([32346f3](https://github.com/bscotch/spritely/commit/32346f3b1e759f17cce8bca17813391452c2b74b))
+
+
+
 # [1.4.0](https://github.com/bscotch/spritely/compare/v1.3.1...v1.4.0) (2020-11-17)
 
 
