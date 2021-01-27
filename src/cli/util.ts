@@ -8,7 +8,7 @@ import {
 import commander from "commander";
 import { Spritely } from "../lib/Spritely";
 import path from "path";
-import fs from "fs-extra";
+import {fsRetry as fs} from "../lib/utility";
 import { assert } from "../lib/errors";
 import chokidar from "chokidar";
 
@@ -192,8 +192,9 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
       const movedSpritePath = path.join(options.move, path.relative(options.folder,spriteDir));
       // Clear any existing images in the target directory
       try{
-        listFilesByExtensionSync(movedSpritePath,'png')
-          .forEach(existingSubimage=>fs.removeSync(existingSubimage));
+        const waits = listFilesByExtensionSync(movedSpritePath,'png')
+          .map(existingSubimage=>fs.remove(existingSubimage));
+        await Promise.allSettled(waits);
       }
       catch{}
       await sprite.move(path.dirname(movedSpritePath));
@@ -247,21 +248,24 @@ async function fixSprites (method:SpritelyFixMethod|SpritelyFixMethod[],options:
     ].filter(x=>x);
     for(const topLevelDir of topLevelDirs){
       const moveDir = path.join(options.move,topLevelDir);
-      if(! await fs.existsSync(moveDir)){
+      const exists = await fs.pathExists(moveDir);
+      if(! exists ){
         continue;
       }
-      const childrenAreImagesOrFolders = listPathsSync(moveDir,true)
-        .every(child=>child.endsWith('.png') || fs.statSync(child).isDirectory());
+      const childrenAreImagesOrFoldersChecks = listPathsSync(moveDir,true)
+        .map(async child=>child.endsWith('.png') || (await fs.stat(child)).isDirectory());
+      const childrenAreImagesOrFolders = (await Promise.all(childrenAreImagesOrFoldersChecks))
+        .every(yep=>yep);
       if(!childrenAreImagesOrFolders){
         continue;
       }
-      fs.emptyDirSync(moveDir);
-      fs.rmdirSync(moveDir);
+      await fs.emptyDir(moveDir);
+      await fs.rmdir(moveDir);
     }
   }
   await fixSpriteDirs(method,spriteDirs,options);
   if(options.move){
-    removeEmptyDirsSync(options.folder,{excludeRoot:true});
+    await removeEmptyDirsSync(options.folder,{excludeRoot:true});
   }
 }
 
