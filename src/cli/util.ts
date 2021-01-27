@@ -267,6 +267,7 @@ async function fixSprites (method:SpritelyFixMethod|SpritelyFixMethod[],options:
 
 /** Prepare and run sprite fixers, include setting up watchers if needed. */
 export async function runFixer(method:SpritelyFixMethod|SpritelyFixMethod[],options: SpritelyCliGeneralOptions){
+  let debounceTimeout:NodeJS.Timeout|null = null;
   let running = false;
   const run = async ()=>{
     // Prevent overlapping runs
@@ -284,17 +285,23 @@ export async function runFixer(method:SpritelyFixMethod|SpritelyFixMethod[],opti
   if( ! options.watch){
     return;
   }
+  const debouncedRun = async ()=>{
+    if(debounceTimeout){
+      clearTimeout(debounceTimeout);
+    }
+    debounceTimeout = setTimeout(run,2000);
+  };
   // Set up the watcher
   // Glob patterns need to have posix separators
   const pattern = path.join(options.folder,"**","*.png")
     .split(path.sep).join(path.posix.sep);
   const watcher = chokidar.watch(pattern,{
-    // awaitWriteFinish: {
-    //   stabilityThreshold: 2000,
-    //   pollInterval: 100
-    // }
+    awaitWriteFinish: {
+      stabilityThreshold: 500,
+      pollInterval: 100
+    }
   });
   watcher
-    .on('add', run)
-    .on('change', run);
+    .on('add', debouncedRun)
+    .on('change', debouncedRun);
 }
