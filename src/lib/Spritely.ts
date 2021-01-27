@@ -209,9 +209,12 @@ export class Spritely {
     return this;
   }
 
-  /** Copy this sprite (folder + subimages) to another location */
-  async copy(destinationFolder:string){
-    const toSpriteFolder = path.join(destinationFolder,this.name);
+  /**
+   * Copy this sprite (folder + subimages) to another location.
+   * The sprite can be renamed during the copy operation.
+   */
+  async copy(destinationFolder:string,options?:{name?:string}){
+    const toSpriteFolder = path.join(destinationFolder,options?.name||this.name);
     await fs.ensureDir(toSpriteFolder);
     const newPaths: string[] = [];
     for(const subimagePath of this.paths){

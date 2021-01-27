@@ -148,18 +148,31 @@ type SpritelyFixMethod = 'crop'|'bleed'|'applyGradientMaps';
 
 async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDir:string,options:SpritelyCliGeneralOptions){
   try{
-    // TODO: Check for overrides based on filenames.
-    const sprite = new Spritely({
+    const spriteOptions = {
       spriteDirectory: spriteDir,
       allowSubimageSizeMismatch: options.allowSubimageSizeMismatch,
       gradientMapsFile: options.gradientMapsFile
-    });
+    };
+    let sprite = new Spritely(spriteOptions);
     const methodOverrides = getMethodOverridesFromName(sprite.name);
     // Combine methods provided by the CLI and by the name suffixes,
     // and then filter out those blocked by name suffixes.
     const methods = (typeof method == 'string' ? [method] : method)
       .concat(methodOverrides.add)
       .filter(method=>!methodOverrides.remove.includes(method as SpritelyMethodOverrideName));
+
+    // If the sprite uses suffixes, should nuke that folder and replace
+    // it with one that doesn't have the suffixes.
+    if(sprite.name != methodOverrides.name){
+      const spriteParent = path.dirname(sprite.path);
+      const newSpritePath = path.join(spriteParent,methodOverrides.name);
+      await fs.remove(newSpritePath); // make sure the dest gets clobbered
+      sprite.copy(spriteParent,{name:methodOverrides.name});
+      await fs.remove(sprite.path);
+      spriteDir = path.join(spriteParent, methodOverrides.name);
+      sprite = new Spritely({...spriteOptions,spriteDirectory:spriteDir});
+    }
+
     for(const spriteMethod of methods){
       // @ts-expect-error
       await sprite[spriteMethod](spriteMethod=='applyGradientMaps' ? options.deleteSource : undefined);

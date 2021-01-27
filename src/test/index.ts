@@ -261,15 +261,15 @@ describe("Spritely", function(){
     // Use CLI to apply CROP
     // Use suffix to BLOCK CROP and ADD BLEED
     // Should then look like a bled-only reference.
-    const suffixedSprite = 'suffix-override--nc--bleed';
-    const folder = sandboxPath(suffixedSprite);
+    const unsuffixedName = 'suffix-override';
+    const suffixedName = `${unsuffixedName}--nc--bleed`;
+    const folder = sandboxPath(suffixedName);
     await fixSprites('crop',{folder});
     const bledEqualsReference = await Spritely.imagesAreEqual(
-      sandboxPath(suffixedSprite,'pearl.png'),
+      sandboxPath(unsuffixedName,'pearl.png'),
       samplesPath('bled','pearl.png')
     );
     expect(bledEqualsReference).to.be.true;
-    process.exit(1);
   });
 
   it("can move a sprite", async function(){

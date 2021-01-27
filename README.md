@@ -193,6 +193,9 @@ the end result would be an image that was cropped but not bled.
 In other words, suffix methods will *always* be performed or
 blocked whenever *any* CLI command is run.
 
+Note that sprites (folders) will be renamed to remove the
+suffixes, so make sure that won't create naming conflicts.
+
 ### Running commands (CLI)
 
 Run spritely commands by opening up a terminal
