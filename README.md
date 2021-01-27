@@ -164,6 +164,35 @@ enemy/enemy-run.png
 enemy/enemy-sit.png
 ```
 
+#### Suffixes for overriding CLI commands
+
+You'll likely be using the CLI to run batch operations on your images.
+It's also likely that you'll want most of your images to be treated
+one way, while some subset are treated another. This can get annoying,
+since you'll have to run separate CLI commands, and put images in separate
+folders, to make that happen.
+
+Alternatively, you can add suffixes to your source image names to
+ovverride whatever the CLI is doing. This allows you to put all images
+in one place, use one CLI command to handle the most common case,
+and then simply add a suffix to the names of those sprites you want
+to have different treatments.
+
+Suffixes are:
+
++ `--c` or `--crop`: force cropping
++ `--nc` or `--no-crop`: block cropping
++ `--b` or `--bleed`: force bleeding
++ `--nb` or `--no-bleed`: block bleeding
+
+For example, if you had a sprite (folder) named `mySprite--c--nb`
+(force crop, block bleed),
+and then ran the CLI command `spritely bleed . . .` (see below),
+the end result would be an image that was cropped but not bled.
+
+In other words, suffix methods will *always* be performed or
+blocked whenever *any* CLI command is run.
+
 ### Running commands (CLI)
 
 Run spritely commands by opening up a terminal

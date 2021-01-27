@@ -9,6 +9,7 @@ import commander from "commander";
 import { Spritely } from "../lib/Spritely";
 import path from "path";
 import fs from "fs-extra";
+import { assert } from "../lib/errors";
 
 export interface SpritelyCliGeneralOptions {
   folder: string,
@@ -98,16 +99,67 @@ function getSpriteDirs(folder:string,recursive?:boolean){
   return folders;
 }
 
+const methodOverrideTagNames = {
+  c: 'crop',
+  crop: 'crop',
+  b: 'bleed',
+  bleed: 'bleed'
+} as const;
+
+type SpritelyMethodOverrideTag = keyof typeof methodOverrideTagNames;
+type SpritelyMethodOverrideName = typeof methodOverrideTagNames[SpritelyMethodOverrideTag];
+
+/**
+ * The sprite name may include suffixes to indicate overrides
+ * for any CLI-applied adjustments. These can force application
+ * of methods as well as prevent them. Suffixes being with `--`
+ * and are chained together without separators. Valid suffices:
+ * + `--c` or `--crop`: force cropping
+ * + `--nc` or `--no-crop`: block cropping
+ * + `--b` or `--bleed`: force bleeding
+ * + `--nb` or `--no-bleed`: block bleeding
+ */
+function getMethodOverridesFromName(name:string){
+  // Pull off all the method suffixes
+  const overrides = {
+    name,
+    add: [] as SpritelyMethodOverrideName[],
+    remove: [] as SpritelyMethodOverrideName[],
+  };
+  let bareName = name; // suffixes removed
+  const suffixRegex = /^(.*)(--(n?[cb]|(no-)?(crop|bleed)))$/;
+  while(bareName.match(suffixRegex)){
+    const parts = bareName.match(suffixRegex);
+    if(!parts){
+      break;
+    }
+    bareName = parts[1];
+    const overrideType = parts[2].match(/^--n/) ? "remove" : "add";
+    const methodNickname = parts[2].replace(/--(no-|n)?/,'') as SpritelyMethodOverrideTag;
+    const method = methodOverrideTagNames[methodNickname];
+    assert(method,`${methodNickname} is not a valid method suffix.`);
+    overrides[overrideType].push(method);
+  }
+  overrides.name = bareName;
+  return overrides;
+}
+
 type SpritelyFixMethod = 'crop'|'bleed'|'applyGradientMaps';
 
 async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteDir:string,options:SpritelyCliGeneralOptions){
-  const methods = typeof method == 'string' ? [method] : method;
   try{
+    // TODO: Check for overrides based on filenames.
     const sprite = new Spritely({
       spriteDirectory: spriteDir,
       allowSubimageSizeMismatch: options.allowSubimageSizeMismatch,
       gradientMapsFile: options.gradientMapsFile
     });
+    const methodOverrides = getMethodOverridesFromName(sprite.name);
+    // Combine methods provided by the CLI and by the name suffixes,
+    // and then filter out those blocked by name suffixes.
+    const methods = (typeof method == 'string' ? [method] : method)
+      .concat(methodOverrides.add)
+      .filter(method=>!methodOverrides.remove.includes(method as SpritelyMethodOverrideName));
     for(const spriteMethod of methods){
       // @ts-expect-error
       await sprite[spriteMethod](spriteMethod=='applyGradientMaps' ? options.deleteSource : undefined);

@@ -257,6 +257,21 @@ describe("Spritely", function(){
     ).to.be.true;
   });
 
+  it("CLI commands can be overridden by name suffixes", async function(){
+    // Use CLI to apply CROP
+    // Use suffix to BLOCK CROP and ADD BLEED
+    // Should then look like a bled-only reference.
+    const suffixedSprite = 'suffix-override--nc--bleed';
+    const folder = sandboxPath(suffixedSprite);
+    await fixSprites('crop',{folder});
+    const bledEqualsReference = await Spritely.imagesAreEqual(
+      sandboxPath(suffixedSprite,'pearl.png'),
+      samplesPath('bled','pearl.png')
+    );
+    expect(bledEqualsReference).to.be.true;
+    process.exit(1);
+  });
+
   it("can move a sprite", async function(){
     expect(()=>new Spritely(sandboxPath('dir','subdir','subsubdir'))).to.not.throw();
     const options = {

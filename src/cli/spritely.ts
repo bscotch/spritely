@@ -8,8 +8,7 @@ cli.description('Spritely: Image correction and cleanup for 2D game sprites')
   .command("bleed", oneline`
     Add a single-pixel low-alpha outline around foreground
     objects to improve aliasing.
-  `)
-  .alias('alphaline')
+  `).alias('alphaline')
   .command("crop",  oneline`
     Autocrop the subimages of a sprite while maintaining relative positions.
   `)
