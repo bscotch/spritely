@@ -1,3 +1,12 @@
+## [1.5.1](https://github.com/bscotch/spritely/compare/v1.5.0...v1.5.1) (2021-01-27)
+
+
+### Bug Fixes
+
+* A missing 'await' can cause a sprite to be deleted before it is copied. ([9269e46](https://github.com/bscotch/spritely/commit/9269e469cad58fd5700825b6756a788ee4566550))
+
+
+
 # [1.5.0](https://github.com/bscotch/spritely/compare/v1.4.0...v1.5.0) (2021-01-27)
 
 
