@@ -167,7 +167,7 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
       const spriteParent = path.dirname(sprite.path);
       const newSpritePath = path.join(spriteParent,methodOverrides.name);
       await fs.remove(newSpritePath); // make sure the dest gets clobbered
-      sprite.copy(spriteParent,{name:methodOverrides.name});
+      await sprite.copy(spriteParent,{name:methodOverrides.name});
       await fs.remove(sprite.path);
       spriteDir = path.join(spriteParent, methodOverrides.name);
       sprite = new Spritely({...spriteOptions,spriteDirectory:spriteDir});
