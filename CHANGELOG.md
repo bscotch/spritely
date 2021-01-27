@@ -1,3 +1,12 @@
+## [1.5.2](https://github.com/bscotch/spritely/compare/v1.5.1...v1.5.2) (2021-01-27)
+
+
+### Bug Fixes
+
+* CLI commands are borked due to breaking update to underlying dependency. ([1837902](https://github.com/bscotch/spritely/commit/1837902ab878b8f90ea3390151d4afd32d10e381))
+
+
+
 ## [1.5.1](https://github.com/bscotch/spritely/compare/v1.5.0...v1.5.1) (2021-01-27)
 
 
