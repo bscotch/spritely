@@ -1,3 +1,12 @@
+# [1.6.0](https://github.com/bscotch/spritely/compare/v1.5.2...v1.6.0) (2021-01-27)
+
+
+### Features
+
+* Add watcher option to CLI commands, so that new/updated images can automatically be fixed. ([d882e5a](https://github.com/bscotch/spritely/commit/d882e5a764cd430d8ca435021a36f32fda45abf2))
+
+
+
 ## [1.5.2](https://github.com/bscotch/spritely/compare/v1.5.1...v1.5.2) (2021-01-27)
 
 
