@@ -5,7 +5,7 @@ async function runCliCommand(){
   addGeneralOptions(cli.description('Spritely: Crop subimages'))
     .parse();
 
-  await fixSprites('crop',cli as typeof cli & SpritelyCliGeneralOptions);
+  await fixSprites('crop',cli.opts() as SpritelyCliGeneralOptions);
 }
 
 runCliCommand();

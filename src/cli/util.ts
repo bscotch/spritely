@@ -157,10 +157,11 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
     const methodOverrides = getMethodOverridesFromName(sprite.name);
     // Combine methods provided by the CLI and by the name suffixes,
     // and then filter out those blocked by name suffixes.
-    const methods = (typeof method == 'string' ? [method] : method)
-      .concat(methodOverrides.add)
-      .filter(method=>!methodOverrides.remove.includes(method as SpritelyMethodOverrideName));
-
+    const methods = [...new Set(
+      (typeof method == 'string' ? [method] : method)
+        .concat(methodOverrides.add)
+        .filter(method=>!methodOverrides.remove.includes(method as SpritelyMethodOverrideName))
+    )];
     // If the sprite uses suffixes, should nuke that folder and replace
     // it with one that doesn't have the suffixes.
     if(sprite.name != methodOverrides.name){
@@ -169,7 +170,7 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
       await fs.remove(newSpritePath); // make sure the dest gets clobbered
       await sprite.copy(spriteParent,{name:methodOverrides.name});
       await fs.remove(sprite.path);
-      spriteDir = path.join(spriteParent, methodOverrides.name);
+      spriteDir = newSpritePath;
       sprite = new Spritely({...spriteOptions,spriteDirectory:spriteDir});
     }
 

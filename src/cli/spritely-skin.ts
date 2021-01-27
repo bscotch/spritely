@@ -19,7 +19,7 @@ async function runCliCommand(){
     `)
     .parse();
 
-  await fixSprites(['applyGradientMaps'],cli as typeof cli & SpritelyCliGeneralOptions);
+  await fixSprites(['applyGradientMaps'],cli.opts() as SpritelyCliGeneralOptions);
 }
 
 runCliCommand();

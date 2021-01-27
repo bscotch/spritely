@@ -257,16 +257,22 @@ describe("Spritely", function(){
     ).to.be.true;
   });
 
-  it("CLI commands can be overridden by name suffixes", async function(){
+  it.only("CLI commands can be overridden by name suffixes", async function(){
     // Use CLI to apply CROP
     // Use suffix to BLOCK CROP and ADD BLEED
     // Should then look like a bled-only reference.
-    const unsuffixedName = 'suffix-override';
-    const suffixedName = `${unsuffixedName}--nc--bleed`;
-    const folder = sandboxPath(suffixedName);
-    await fixSprites('crop',{folder});
+    const folderName = 'suffix-override';
+    const movedFolderName = 'SpritelyExports';
+    const folder = sandboxPath(folderName);
+    const options = {
+      folder,
+      recursive:true,
+      purgeTopLevelFolders:true,
+      move: sandboxPath(movedFolderName)
+    };
+    await fixSprites('crop',options);
     const bledEqualsReference = await Spritely.imagesAreEqual(
-      sandboxPath(unsuffixedName,'pearl.png'),
+      sandboxPath(movedFolderName,'layer','otherLayer','pearl','pearl.png'),
       samplesPath('bled','pearl.png')
     );
     expect(bledEqualsReference).to.be.true;

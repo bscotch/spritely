@@ -5,7 +5,7 @@ async function runCliCommand(){
   addGeneralOptions(cli.description('Spritely: Bleed subimages'))
     .parse();
 
-  await fixSprites('bleed',cli as typeof cli & SpritelyCliGeneralOptions);
+  await fixSprites('bleed',cli.opts() as SpritelyCliGeneralOptions);
 }
 
 runCliCommand();
