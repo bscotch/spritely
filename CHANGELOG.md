@@ -1,3 +1,12 @@
+## [1.6.1](https://github.com/bscotch/spritely/compare/v1.6.0...v1.6.1) (2021-01-27)
+
+
+### Bug Fixes
+
+* The watcher is too aggressive about firing add/change events. It needs to wait until file-writing is complete and also debounce. ([0f8a3b2](https://github.com/bscotch/spritely/commit/0f8a3b2358e58eaeed5646007388b32c4f11a57d))
+
+
+
 # [1.6.0](https://github.com/bscotch/spritely/compare/v1.5.2...v1.6.0) (2021-01-27)
 
 
