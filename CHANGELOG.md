@@ -1,3 +1,13 @@
+## [1.6.3](https://github.com/bscotch/spritely/compare/v1.6.2...v1.6.3) (2021-01-28)
+
+
+### Features
+
+* Add 'retriable' wrapper on file system functions, and use those ([8a5c405](https://github.com/bscotch/spritely/commit/8a5c4051c9ed909ccc718161c6e645c6ec6e462b))
+* Use retry-able file operations wherever possible in the Spritely main class. This should reduce conflicts with file system operations coming from other sources. ([1ea55ba](https://github.com/bscotch/spritely/commit/1ea55ba296fc9d07ec595866243dde66f0563c34))
+
+
+
 ## [1.6.2](https://github.com/bscotch/spritely/compare/v1.6.1...v1.6.2) (2021-01-28)
 
 
