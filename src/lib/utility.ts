@@ -42,6 +42,8 @@ export function sha256 (data: crypto.BinaryLike){
     .digest('hex');
 }
 
+type Unwrapped<T> = T extends PromiseLike<infer U> ? Unwrapped<U> : T;
+
 /**
  * Wrap a file function so that it can auto-retry on EBUSY and EPERM errors
  * (these are caused when Dropbox tries to do something on the same files).
@@ -50,7 +52,7 @@ function makeRetriable<
   FileOpFunction extends ((...args:any[])=>any)
 >(fileOpFunction:FileOpFunction){
 
-  const retriableFunction = async (...args: Parameters<FileOpFunction>):Promise<ReturnType<FileOpFunction>> =>{
+  const retriableFunction = async (...args: Parameters<FileOpFunction>):Promise<Unwrapped<ReturnType<FileOpFunction>>> =>{
     let fails = 0;
     try{
       return await fileOpFunction(...args);
@@ -75,7 +77,6 @@ type FileMutateFun = (path:string)=>Promise<void>;
 type CopyFn = (from:string,to:string)=>Promise<void>;
 type ExistsFn = (path:string)=>Promise<boolean>;
 
-// TODO: Wrap the other file-management functions and use them!
 export const fsRetry = {
   emptyDir:   makeRetriable<FileMutateFun>(fs.emptyDir),
   ensureDir:  makeRetriable<FileMutateFun>(fs.ensureDir),
@@ -89,4 +90,5 @@ export const fsRetry = {
   rmdir:      makeRetriable<FileMutateFun>(fs.rmdir),
   writeFile:  makeRetriable<WriteFileFn>(fs.writeFile),
   stat: makeRetriable<(path:string)=>Promise<fs.Stats>>(fs.stat),
+  copyFile: makeRetriable<CopyFn>(fs.copyFile)
 } as const;
