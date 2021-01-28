@@ -1,13 +1,5 @@
 import fs from "fs-extra";
 
-function logThrownError(error:Error|SpritelyError){
-  fs.appendFileSync('node.error.log',error?.stack||error.message);
-  throw error;
-}
-
-process.on('unhandledRejection', logThrownError);
-process.on('uncaughtException', logThrownError);
-
 export class SpritelyError extends Error {
   constructor(message:string){
     super(message);

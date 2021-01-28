@@ -1,4 +1,5 @@
-import fs from "fs-extra";
+import {fsRetry as fs} from "./utility";
+import { default as nonRetryFs} from "fs-extra";
 import path from "path";
 import {
   assert,
@@ -204,7 +205,8 @@ export class Spritely {
     });
     await Promise.all(waits);
     if(deleteSourceImages){
-      this.paths.forEach(p=>fs.removeSync(p));
+      const removeWaits = this.paths.map(p=>fs.remove(p));
+      await Promise.all(removeWaits);
     }
     return this;
   }
@@ -220,7 +222,7 @@ export class Spritely {
     for(const subimagePath of this.paths){
       const newPath = path.join(toSpriteFolder,path.basename(subimagePath));
       newPaths.push(newPath);
-      fs.copyFileSync(subimagePath,newPath);
+      await fs.copyFile(subimagePath,newPath);
     }
     return this;
   }
@@ -259,7 +261,7 @@ export class Spritely {
       : defaultNames;
     const gradientMaps = [];
     for(const filename of fileNames){
-      if(fs.existsSync(filename)){
+      if(nonRetryFs.existsSync(filename)){
         gradientMaps.push(...this.getGradientMapsFromFile(filename));
       }
     }
@@ -271,7 +273,7 @@ export class Spritely {
    * to all subimages.
    */
   static getSubimages(dir:string){
-    const subimagePaths = fs.readdirSync(dir)
+    const subimagePaths = nonRetryFs.readdirSync(dir)
       .filter(subimagePath=>subimagePath.endsWith('.png'))
       .map(subimagePath=>path.join(dir,subimagePath));
     assert(subimagePaths.length, `No subimages found`);
@@ -481,8 +483,8 @@ export class Spritely {
    * along the grayscale pallette, and 'colorHex' are RGB colors in hex format.
    */
   private getGradientMapsFromFile(filepath:string){
-    assert(fs.existsSync(filepath),`GradientMap file '${filepath}' does not exist.`);
-    const skinInfo = yaml.parse(fs.readFileSync(filepath,'utf8')) as GradientMapsFile;
+    assert(nonRetryFs.existsSync(filepath),`GradientMap file '${filepath}' does not exist.`);
+    const skinInfo = yaml.parse(nonRetryFs.readFileSync(filepath,'utf8')) as GradientMapsFile;
     const skins = Object.keys(skinInfo.skins);
     return skins.map(skin=>{
       const colorMap = skinInfo.skins[skin];
