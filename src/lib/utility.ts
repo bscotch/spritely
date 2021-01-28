@@ -8,6 +8,8 @@ import {
   removeEmptyDirsSync,
 } from "@bscotch/utility";
 
+const FILE_FUNCTION_RETRY_WAIT_MILLIS = 100;
+
 /**
  * From Lodash {@link https://github.com/lodash/lodash/blob/master/clamp.js}
  */
@@ -63,7 +65,7 @@ function makeRetriable<
       const isPotentialDropboxError = message?.startsWith("EBUSY") ||
         message?.startsWith("EPERM");
       if(fails<10 && isPotentialDropboxError){
-        await wait(100);
+        await wait(FILE_FUNCTION_RETRY_WAIT_MILLIS);
         return retriableFunction(...args);
       }
       throw err;
