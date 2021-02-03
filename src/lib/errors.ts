@@ -1,9 +1,12 @@
+import "source-map-support/register";
+
 import fs from "fs-extra";
 
 export class SpritelyError extends Error {
   constructor(message:string){
     super(message);
     this.name = 'SpritelyError';
+    Error.captureStackTrace(this,this.constructor);
   }
 }
 
