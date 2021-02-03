@@ -1,3 +1,13 @@
+## [1.6.5](https://github.com/bscotch/spritely/compare/v1.6.4...v1.6.5) (2021-02-03)
+
+
+### Features
+
+* Spritely batch operations now fully crop subimages if *only* the crop action is being used. If bleed is *also* being applied, the crop will leave behind a 1px border. ([607e899](https://github.com/bscotch/spritely/commit/607e8994d5ad4ce4ada5296c1fc821088a2e6553))
+* Spritely errors now use source maps to generate traces, making debugging in production far easier. ([b581c40](https://github.com/bscotch/spritely/commit/b581c406976394dbd551dd258371527ed7421d8f))
+
+
+
 ## [1.6.4](https://github.com/bscotch/spritely/compare/v1.6.3...v1.6.4) (2021-02-03)
 
 
