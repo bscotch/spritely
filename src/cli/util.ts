@@ -9,7 +9,7 @@ import commander from "commander";
 import { Spritely } from "../lib/Spritely";
 import path from "path";
 import {fsRetry as fs} from "../lib/utility";
-import { assert } from "../lib/errors";
+import { assert, SpritelyError } from "../lib/errors";
 import chokidar from "chokidar";
 
 export interface SpritelyCliGeneralOptions {
@@ -172,6 +172,9 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
         .concat(methodOverrides.add)
         .filter(method=>!methodOverrides.remove.includes(method as SpritelyMethodOverrideName))
     )];
+    // Sort so that cropping happens before bleeding, making bleeding less costly.
+    methods.sort().reverse();
+
     // If the sprite uses suffixes, should nuke that folder and replace
     // it with one that doesn't have the suffixes.
     if(sprite.name != methodOverrides.name){
@@ -185,8 +188,18 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
     }
 
     for(const spriteMethod of methods){
-      // @ts-expect-error
-      await sprite[spriteMethod](spriteMethod=='applyGradientMaps' ? options.deleteSource : undefined);
+      if(spriteMethod=='applyGradientMaps'){
+        await sprite.applyGradientMaps(options.deleteSource);
+      }
+      else if(spriteMethod=='bleed'){
+        await sprite.bleed();
+      }
+      else if(spriteMethod=='crop'){
+        await sprite.crop(methods.includes('bleed') ? 1 : 0);
+      }
+      else{
+        throw new SpritelyError(`Invalid correction method ${spriteMethod}`);
+      }
     }
     if(options.move){
       const movedSpritePath = path.join(options.move, path.relative(options.folder,spriteDir));
