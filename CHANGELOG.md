@@ -1,3 +1,12 @@
+## [1.6.4](https://github.com/bscotch/spritely/compare/v1.6.3...v1.6.4) (2021-02-03)
+
+
+### Features
+
+* Batch errors are now logged in full to make it possible to trace them to their source. ([0b45e5b](https://github.com/bscotch/spritely/commit/0b45e5b3ebc2a3abf00e3d968cb384a5183e3719))
+
+
+
 ## [1.6.3](https://github.com/bscotch/spritely/compare/v1.6.2...v1.6.3) (2021-01-28)
 
 
