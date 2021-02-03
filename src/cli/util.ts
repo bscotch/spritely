@@ -204,6 +204,7 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
   catch(err){
     if(!options.recursive || err.message != 'No subimages found'){
       console.log(`Sprite clean failed for "${spriteDir}".`,err?.message);
+      console.log(err);
     }
   }
 }
