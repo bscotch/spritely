@@ -8,7 +8,6 @@ import {
   assertNumberGreaterThanZero,
 } from "./errors";
 import {Image} from "image-js";
-import {removeEmptyDirsSync} from "@bscotch/utility";
 import yaml from "yaml";
 
 
@@ -237,7 +236,7 @@ export class Spritely {
       await fs.remove(subimagePath);
     }
     // Attempt to remove the folders (and clean recursively)
-    removeEmptyDirsSync(this.spriteRoot);
+    await fs.removeEmptyDirs(this.spriteRoot);
     this.subimagePaths = [];
     return this;
   }

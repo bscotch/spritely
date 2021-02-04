@@ -1,9 +1,5 @@
 import {
-  listFilesByExtensionSync,
-  listFoldersSync,
-  listPathsSync,
   oneline,
-  removeEmptyDirsSync,
 } from "@bscotch/utility";
 import commander from "commander";
 import { Spritely } from "../lib/Spritely";
@@ -101,9 +97,9 @@ export function addGeneralOptions(cli: typeof commander){
   return cli;
 }
 
-function getSpriteDirs(folder:string,recursive?:boolean){
+async function getSpriteDirs(folder:string,recursive?:boolean){
   const folders = recursive
-    ? [folder,...listFoldersSync(folder,recursive)]
+    ? [folder,...await fs.listFolders(folder,recursive)]
     : [folder];
   folders.reverse();
   return folders;
@@ -205,7 +201,7 @@ async function fixSpriteDir(method:SpritelyFixMethod|SpritelyFixMethod[],spriteD
       const movedSpritePath = path.join(options.move, path.relative(options.folder,spriteDir));
       // Clear any existing images in the target directory
       try{
-        const waits = listFilesByExtensionSync(movedSpritePath,'png')
+        const waits = (await fs.listFilesByExtension(movedSpritePath,'png'))
           .map(existingSubimage=>fs.remove(existingSubimage));
         await Promise.allSettled(waits);
       }
@@ -235,7 +231,7 @@ function rootDir(fullpath:string,relativeTo='.'){
 async function fixSprites (method:SpritelyFixMethod|SpritelyFixMethod[],options: SpritelyCliGeneralOptions){
   if(options.rootImagesAreSprites){
     // Find any root-level PNGs and move them into a folder by the same name
-    const rootImages = listFilesByExtensionSync(options.folder,'png',false);
+    const rootImages = await fs.listFilesByExtension(options.folder,'png',false);
     for(const rootImage of rootImages){
       const name = path.parse(rootImage).name;
       const newFolder = path.join(options.folder,name);
@@ -245,7 +241,7 @@ async function fixSprites (method:SpritelyFixMethod|SpritelyFixMethod[],options:
     }
   }
   const ifMatch = options.ifMatch ? new RegExp(options.ifMatch) : null;
-  const spriteDirs = getSpriteDirs(options.folder,options.recursive)
+  const spriteDirs = (await getSpriteDirs(options.folder,options.recursive))
     .filter(spriteDir=>{
       if(options.purgeTopLevelFolders || options.ifMatch){
         // Then make sure everything *has* a top-level folder
@@ -266,7 +262,7 @@ async function fixSprites (method:SpritelyFixMethod|SpritelyFixMethod[],options:
       if(! exists ){
         continue;
       }
-      const childrenAreImagesOrFoldersChecks = listPathsSync(moveDir,true)
+      const childrenAreImagesOrFoldersChecks = (await fs.listPaths(moveDir,true))
         .map(async child=>child.endsWith('.png') || (await fs.stat(child)).isDirectory());
       const childrenAreImagesOrFolders = (await Promise.all(childrenAreImagesOrFoldersChecks))
         .every(yep=>yep);
@@ -279,7 +275,7 @@ async function fixSprites (method:SpritelyFixMethod|SpritelyFixMethod[],options:
   }
   await fixSpriteDirs(method,spriteDirs,options);
   if(options.move){
-    await removeEmptyDirsSync(options.folder,{excludeRoot:true});
+    fs.removeEmptyDirs(options.folder,{excludeRoot:true});
   }
 }
 
