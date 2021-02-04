@@ -1,3 +1,12 @@
+## [1.6.6](https://github.com/bscotch/spritely/compare/v1.6.5...v1.6.6) (2021-02-04)
+
+
+### Bug Fixes
+
+* Several file operations that were not retrying on failure now are doing so. This should further reduce conflicts with Dropbox and the like. ([85b1d3d](https://github.com/bscotch/spritely/commit/85b1d3d18c60587c676c55fcd68c7898cf2ca1e1))
+
+
+
 ## [1.6.5](https://github.com/bscotch/spritely/compare/v1.6.4...v1.6.5) (2021-02-03)
 
 

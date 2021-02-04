@@ -1,6 +1,6 @@
 {
   "name": "@bscotch/spritely",
-  "version": "1.6.5",
+  "version": "1.6.6",
   "description": "Spritely: Image correction and cleanup for 2D video game sprites",
   "engines": {
     "node": ">=14.0.0"
