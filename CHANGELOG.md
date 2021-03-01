@@ -1,3 +1,12 @@
+## [1.6.7](https://github.com/bscotch/spritely/compare/v1.6.6...v1.6.7) (2021-03-01)
+
+
+### Features
+
+* Update all dependencies. ([94caf5e](https://github.com/bscotch/spritely/commit/94caf5e02373a570b2899d2df59b89863ee4a5dc))
+
+
+
 ## [1.6.6](https://github.com/bscotch/spritely/compare/v1.6.5...v1.6.6) (2021-02-04)
 
 
