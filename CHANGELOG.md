@@ -1,3 +1,15 @@
+## [1.6.8](https://github.com/bscotch/spritely/compare/v1.6.7...v1.6.8) (2021-03-12)
+
+
+### Features
+
+* Add error handling to the watcher, which simply re-runs itself when an error is caught. ([1c1a488](https://github.com/bscotch/spritely/commit/1c1a488282f8d006df576b3ffe90e6f0377a1bf2))
+* Add extra logging context for file system failures, since these are still plaguing production. ([1e7bb78](https://github.com/bscotch/spritely/commit/1e7bb7886acc4893293fc83a6324080d81b2e4e3))
+* Add uncaught/unhandled error catchers to the CLI, in case that provides more information about file system failures. ([979cc82](https://github.com/bscotch/spritely/commit/979cc82b3fc5a78fb329cea5631be046d7132a23))
+* Update all dependencies. ([ca70391](https://github.com/bscotch/spritely/commit/ca70391aed76bce3705bc20c437550abbfb64c9f))
+
+
+
 ## [1.6.7](https://github.com/bscotch/spritely/compare/v1.6.6...v1.6.7) (2021-03-01)
 
 
