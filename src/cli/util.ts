@@ -364,19 +364,17 @@ export async function runFixer(
     .split(path.sep)
     .join(path.posix.sep);
   const watcher = chokidar.watch(pattern, {
+    ignorePermissionErrors: true,
     awaitWriteFinish: {
       stabilityThreshold: 500,
       pollInterval: 100,
     },
   });
   watcher
-    .on('error', (err: Error & { code?: string }) => {
-      if (err?.code != 'EPERM') {
-        console.log(err);
-      }
-      console.log('Restarting watcher...');
-      watcher.close();
-      return runFixer(method, options);
+    .on('error', async (err: Error & { code?: string }) => {
+      console.log('Closing watcher due to error...');
+      await watcher.close();
+      throw err;
     })
     .on('add', debouncedRun)
     .on('change', debouncedRun)
