@@ -330,9 +330,22 @@ export async function runFixer(
   options: SpritelyCliGeneralOptions
 ) {
   if (options.debug) {
-    process.env.DEBUG == 'true';
+    process.env.DEBUG = 'true';
   }
   let debounceTimeout: NodeJS.Timeout | null = null;
+  const pattern = path
+    .join(options.folder, '**', '*.png')
+    .split(path.sep)
+    .join(path.posix.sep);
+  const watcher = !options.watch
+    ? null
+    : chokidar.watch(pattern, {
+        ignorePermissionErrors: true,
+        awaitWriteFinish: {
+          stabilityThreshold: 500,
+          pollInterval: 100,
+        },
+      });
   let running = false;
   const run = async () => {
     // Prevent overlapping runs
@@ -345,11 +358,12 @@ export async function runFixer(
     } catch (err) {
       console.log(err);
     }
+    await watcher?.close();
     running = false;
+    runFixer(method, options);
   };
-  await run();
-  if (!options.watch) {
-    return;
+  if (!watcher) {
+    return await run();
   }
   const debouncedRun = async () => {
     if (debounceTimeout) {
@@ -359,17 +373,6 @@ export async function runFixer(
   };
   // Set up the watcher
   // Glob patterns need to have posix separators
-  const pattern = path
-    .join(options.folder, '**', '*.png')
-    .split(path.sep)
-    .join(path.posix.sep);
-  const watcher = chokidar.watch(pattern, {
-    ignorePermissionErrors: true,
-    awaitWriteFinish: {
-      stabilityThreshold: 500,
-      pollInterval: 100,
-    },
-  });
   watcher
     .on('error', async (err: Error & { code?: string }) => {
       console.log('Closing watcher due to error...');
@@ -387,4 +390,5 @@ export async function runFixer(
         process.exit(1);
       }
     });
+  await run();
 }

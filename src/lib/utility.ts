@@ -75,8 +75,6 @@ function makeRetriable<FileOpFunction extends (...args: any[]) => any>(
       }
       const failMessage = `${fileOpFunction.name} failed ${fails} times.`;
       if (fails < 10) {
-        console.log(failMessage);
-        console.log(err);
         await wait(FILE_FUNCTION_RETRY_WAIT_MILLIS);
         return retriableFunction(...args);
       }
