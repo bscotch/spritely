@@ -379,5 +379,14 @@ export async function runFixer(
       return runFixer(method, options);
     })
     .on('add', debouncedRun)
-    .on('change', debouncedRun);
+    .on('change', debouncedRun)
+    .on('unlinkDir', (dir) => {
+      // If the root directory gets unlinked, close the watcher.
+      if (path.resolve(dir) == path.resolve(options.folder)) {
+        console.log(
+          'Watched directory deleted. Requires manual restart once the directory exists again.'
+        );
+        process.exit(1);
+      }
+    });
 }
