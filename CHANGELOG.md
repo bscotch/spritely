@@ -1,3 +1,12 @@
+## [1.6.11](https://github.com/bscotch/spritely/compare/v1.6.10...v1.6.11) (2021-03-12)
+
+
+### Features
+
+* Swallow watcher EPERM errors and stop auto-restarting fixer on watch error. ([0bfe845](https://github.com/bscotch/spritely/commit/0bfe845488f8c6d518d11cc6bcad86ccae513cb4))
+
+
+
 ## [1.6.10](https://github.com/bscotch/spritely/compare/v1.6.9...v1.6.10) (2021-03-12)
 
 
