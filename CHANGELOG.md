@@ -1,3 +1,13 @@
+## [1.6.10](https://github.com/bscotch/spritely/compare/v1.6.9...v1.6.10) (2021-03-12)
+
+
+### Features
+
+* Add '--debug' CLI flag such that, when not provided, error stack traces are no longer dumped into the console. This will improve the user experience for errors that aren't a big deal. ([bed5e09](https://github.com/bscotch/spritely/commit/bed5e09b5e775f00a6453c9bcbeaa2d0038020dc))
+* Add watcher event to detect when the root watched directory gets deleted, so that the watcher can turn itself off (it cannot otherwise work even when the folder gets re-created). ([989ea56](https://github.com/bscotch/spritely/commit/989ea56c6e9451aff504704e5bcff608b616fb25))
+
+
+
 ## [1.6.9](https://github.com/bscotch/spritely/compare/v1.6.8...v1.6.9) (2021-03-12)
 
 
