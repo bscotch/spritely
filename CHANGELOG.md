@@ -1,3 +1,12 @@
+## [1.6.9](https://github.com/bscotch/spritely/compare/v1.6.8...v1.6.9) (2021-03-12)
+
+
+### Bug Fixes
+
+* Retry-able file-system functions use an error message whitelist to determine if they should retry, but this is fragile since we don't know the whole range of temporary errors caused by Dropbox interference. Instead have *all* errors retry, and we can build a blacklist as needed. ([f9a50c2](https://github.com/bscotch/spritely/commit/f9a50c256af42a3a2baa6bdcec2a0cbc70c461c6))
+
+
+
 ## [1.6.8](https://github.com/bscotch/spritely/compare/v1.6.7...v1.6.8) (2021-03-12)
 
 
