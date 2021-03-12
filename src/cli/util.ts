@@ -6,6 +6,18 @@ import { fsRetry as fs } from '../lib/utility';
 import { assert, SpritelyError } from '../lib/errors';
 import chokidar from 'chokidar';
 
+process.on('uncaughtException', (err) => {
+  console.log('Spritely CLI: UNCAUGHT EXCEPTION');
+  console.log(err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.log('Spritely CLI: UNHANDLED REJECTION');
+  console.log(err);
+  process.exit(1);
+});
+
 export interface SpritelyCliGeneralOptions {
   folder: string;
   recursive?: boolean;
