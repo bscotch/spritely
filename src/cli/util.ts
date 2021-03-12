@@ -6,17 +6,13 @@ import { fsRetry as fs } from '../lib/utility';
 import { assert, SpritelyError } from '../lib/errors';
 import chokidar from 'chokidar';
 
-process.on('uncaughtException', (err) => {
-  console.log('Spritely CLI: UNCAUGHT EXCEPTION');
-  console.log(err);
+function crash(err?: SpritelyError | Error) {
+  console.log(process.env.DEBUG == 'true' ? err : err?.message || err);
   process.exit(1);
-});
+}
 
-process.on('unhandledRejection', (err) => {
-  console.log('Spritely CLI: UNHANDLED REJECTION');
-  console.log(err);
-  process.exit(1);
-});
+process.on('uncaughtException', crash);
+process.on('unhandledRejection', crash);
 
 export interface SpritelyCliGeneralOptions {
   folder: string;
@@ -29,6 +25,7 @@ export interface SpritelyCliGeneralOptions {
   deleteSource?: boolean;
   gradientMapsFile?: string;
   watch?: boolean;
+  debug?: boolean;
 }
 
 export const cliOptions = {
@@ -87,12 +84,13 @@ export const cliOptions = {
       sprites.`,
   ],
   match: [
-    '-p --if-match',
+    '-p --if-match <pattern>',
     oneline`
       Only perform the tasks on sprites whose top-level folder
       (relative to --folder) matches this pattern. Case-sensitive,
       converted to a regex pattern using JavaScript's 'new RegExp()'.`,
   ],
+  debug: ['--debug', `Show verbose logging and error output.`],
 } as const;
 
 export function addGeneralOptions(cli: typeof commander) {
@@ -331,6 +329,9 @@ export async function runFixer(
   method: SpritelyFixMethod | SpritelyFixMethod[],
   options: SpritelyCliGeneralOptions
 ) {
+  if (options.debug) {
+    process.env.DEBUG == 'true';
+  }
   let debounceTimeout: NodeJS.Timeout | null = null;
   let running = false;
   const run = async () => {
@@ -369,9 +370,11 @@ export async function runFixer(
     },
   });
   watcher
-    .on('error', (err) => {
-      console.log(err);
-      console.log('Restarting...');
+    .on('error', (err: Error & { code?: string }) => {
+      if (err?.code != 'EPERM') {
+        console.log(err);
+      }
+      console.log('Restarting watcher...');
       watcher.close();
       return runFixer(method, options);
     })
