@@ -43,6 +43,14 @@ export function sha256(data: crypto.BinaryLike) {
 
 type Unwrapped<T> = T extends PromiseLike<infer U> ? Unwrapped<U> : T;
 
+function createMessageIfPermanentError(fn: (...args: any[]) => void, err: any) {
+  if (err?.code == 'ENOENT') {
+    return `File '${err?.path || err?.filename}' not found [${err.code}] -- ${
+      fn.name
+    } failed.`;
+  }
+}
+
 /**
  * Wrap a file function so that it can auto-retry on EBUSY and EPERM errors
  * (these are caused when Dropbox tries to do something on the same files).
@@ -58,14 +66,21 @@ function makeRetriable<FileOpFunction extends (...args: any[]) => any>(
       return await fileOpFunction(...args);
     } catch (err) {
       fails++;
-      const message = err?.message;
-      const isPotentialDropboxError =
-        message?.startsWith('EBUSY') || message?.startsWith('EPERM');
-      if (fails < 10 && isPotentialDropboxError) {
+      const permanentFailureMessage = createMessageIfPermanentError(
+        fileOpFunction,
+        err
+      );
+      if (permanentFailureMessage) {
+        throw permanentFailureMessage;
+      }
+      const failMessage = `${fileOpFunction.name} failed ${fails} times.`;
+      if (fails < 10) {
+        console.log(failMessage);
+        console.log(err);
         await wait(FILE_FUNCTION_RETRY_WAIT_MILLIS);
         return retriableFunction(...args);
       }
-      console.log(`${fileOpFunction.name} failed ${fails} times.`);
+      console.log(failMessage);
       throw err;
     }
   };
