@@ -5,10 +5,11 @@ import path from 'path';
 import { fsRetry as fs } from '../lib/utility';
 import { assert, SpritelyError } from '../lib/errors';
 import chokidar from 'chokidar';
-import { error, info, warning } from '../lib/log';
+import { debug, error, info, warning } from '../lib/log';
 
 function crash(err?: SpritelyError | Error) {
-  error(process.env.DEBUG == 'true' ? err : err?.message || err);
+  // If in debug mode, log the whole-assed error. Otherwise just the message.
+  console.log(process.env.DEBUG == 'true' ? err : err?.message || err);
   process.exit(1);
 }
 
@@ -103,7 +104,8 @@ export function addGeneralOptions(cli: typeof commander) {
     .option(...cliOptions.move)
     .option(...cliOptions.purge)
     .option(...cliOptions.rootImages)
-    .option(...cliOptions.match);
+    .option(...cliOptions.match)
+    .option(...cliOptions.debug);
   return cli;
 }
 
@@ -157,6 +159,7 @@ function getMethodOverridesFromName(name: string) {
     ) as SpritelyMethodOverrideTag;
     const method = methodOverrideTagNames[methodNickname];
     assert(method, `${methodNickname} is not a valid method suffix.`);
+    debug(`Method override ${method} found for ${name}`);
     overrides[overrideType].push(method);
   }
   overrides.name = bareName;
@@ -194,6 +197,7 @@ async function fixSpriteDir(
     ];
     // Sort so that cropping happens before bleeding, making bleeding less costly.
     methods.sort().reverse();
+    debug(`Applying methods ${methods} to ${sprite.name}`);
 
     // If the sprite uses suffixes, should nuke that folder and replace
     // it with one that doesn't have the suffixes.
@@ -204,6 +208,7 @@ async function fixSpriteDir(
       await sprite.copy(spriteParent, { name: methodOverrides.name });
       await fs.remove(sprite.path);
       spriteDir = newSpritePath;
+      debug(`Computed real name ${methodOverrides.name} from ${sprite.name}`);
       sprite = new Spritely({ ...spriteOptions, spriteDirectory: spriteDir });
     }
 
@@ -219,6 +224,7 @@ async function fixSpriteDir(
       }
     }
     if (options.move) {
+      debug('Moving modified sprite', sprite.name, 'to', options.folder);
       const movedSpritePath = path.join(
         options.move,
         path.relative(options.folder, spriteDir),
@@ -227,7 +233,10 @@ async function fixSpriteDir(
       try {
         const waits = (
           await fs.listFilesByExtension(movedSpritePath, 'png')
-        ).map((existingSubimage) => fs.remove(existingSubimage));
+        ).map((existingSubimage) => {
+          debug('Removing', existingSubimage);
+          return fs.remove(existingSubimage);
+        });
         await Promise.allSettled(waits);
       } catch {}
       await sprite.move(path.dirname(movedSpritePath));
@@ -313,8 +322,14 @@ async function fixSprites(
         await Promise.all(childrenAreImagesOrFoldersChecks)
       ).every((yep) => yep);
       if (!childrenAreImagesOrFolders) {
+        debug(
+          'Cannot empty top-level dir',
+          topLevelDir,
+          'because some contents are neither images nor folders.',
+        );
         continue;
       }
+      debug('Emptying top-level dir', moveDir);
       await fs.emptyDir(moveDir);
       await fs.rmdir(moveDir);
     }
@@ -325,6 +340,8 @@ async function fixSprites(
   }
 }
 
+let runTally = 0;
+
 /** Prepare and run sprite fixers, include setting up watchers if needed. */
 export async function runFixer(
   method: SpritelyFixMethod | SpritelyFixMethod[],
@@ -332,6 +349,11 @@ export async function runFixer(
 ) {
   if (options.debug) {
     process.env.DEBUG = 'true';
+    debug('Running fixer in DEBUG mode');
+  }
+  runTally++;
+  if (runTally > 1) {
+    debug('Run number', runTally);
   }
   let debounceTimeout: NodeJS.Timeout | null = null;
   const pattern = path
@@ -351,25 +373,29 @@ export async function runFixer(
   const run = async () => {
     // Prevent overlapping runs
     if (running) {
+      debug('Attempted to run while already running.');
       return;
     }
+    debug('Running fixer');
     running = true;
     try {
       await fixSprites(method, options);
     } catch (err) {
       console.log(err);
     }
+    // Turn off the watcher and reboot!
+    // (Apparently this is the cleanest way to manage this?)
     await watcher?.close();
-    running = false;
+    clearTimeout(debounceTimeout!);
+    // running = false; // Only want to run once, since rebooting the whole thing, RIGHT?
     runFixer(method, options);
   };
   if (!watcher) {
     return await run();
   }
   const debouncedRun = async () => {
-    if (debounceTimeout) {
-      clearTimeout(debounceTimeout);
-    }
+    debug('Change detected, debouncing');
+    clearTimeout(debounceTimeout!);
     debounceTimeout = setTimeout(run, 2000);
   };
   // Set up the watcher

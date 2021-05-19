@@ -31,7 +31,9 @@ function log(level: LogLevel, ...stuff: any[]) {
 }
 
 export function debug(...stuff: any[]) {
-  return log('debug', ...stuff);
+  if (process.env.DEBUG == 'true') {
+    return log('debug', ...stuff);
+  }
 }
 
 export function info(...stuff: any[]) {
