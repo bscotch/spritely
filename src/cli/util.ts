@@ -181,6 +181,7 @@ async function fixSpriteDir(
       allowSubimageSizeMismatch: options.allowSubimageSizeMismatch,
       gradientMapsFile: options.gradientMapsFile,
     };
+    // Reduce logger clutter by *not* logging "fixes" that result in no changes.
     let sprite = new Spritely(spriteOptions);
     const methodOverrides = getMethodOverridesFromName(sprite.name);
     // Combine methods provided by the CLI and by the name suffixes,
@@ -214,6 +215,8 @@ async function fixSpriteDir(
       sprite = new Spritely({ ...spriteOptions, spriteDirectory: spriteDir });
     }
 
+    let originalSubimageChecksums = await sprite.checksums;
+
     for (const spriteMethod of methods) {
       if (spriteMethod == 'applyGradientMaps') {
         await sprite.applyGradientMaps(options.deleteSource);
@@ -225,25 +228,32 @@ async function fixSpriteDir(
         throw new SpritelyError(`Invalid correction method ${spriteMethod}`);
       }
     }
+
+    const fixedSubimageChecksums = await sprite.checksums;
+
     if (options.move) {
       debug('Moving modified sprite', sprite.name, 'to', options.folder);
+      originalSubimageChecksums = [];
       const movedSpritePath = path.join(
         options.move,
         path.relative(options.folder, spriteDir),
       );
-      // Clear any existing images in the target directory
-      try {
+      if (await fs.pathExists(movedSpritePath)) {
+        // Clear any excess files!
         const newNames = sprite.paths.map((p) => path.parse(p).base);
         const existingSubimages = await fs.listFilesByExtension(
           movedSpritePath,
           'png',
         );
+        originalSubimageChecksums = await Promise.all(
+          existingSubimages.map((i) => Spritely.pixelsChecksum(i)),
+        );
         const waits = existingSubimages.map((existingSubimage) => {
-          debug('Removing', existingSubimage);
           // Remove IF this subimage is extraneous to the
           // newer source.
           const existingName = path.parse(existingSubimage).base;
           if (!newNames.includes(existingName)) {
+            debug('Removing excess subimage in move target', existingSubimage);
             return fs.remove(existingSubimage);
           }
           return Promise.resolve();
@@ -253,14 +263,18 @@ async function fixSpriteDir(
             debug(`Remove attempt rejected`, existingSubimages[i]);
           }
         });
-      } catch (err) {
-        debug(err.message);
       }
       await sprite.move(path.dirname(movedSpritePath));
     }
-    info(
+    // If the resulting images are contained within the originals,
+    // log via debug instead of info to reduce clutter.
+    const nothingChanged = fixedSubimageChecksums.every((fixedChecksum) =>
+      originalSubimageChecksums.includes(fixedChecksum),
+    );
+    (nothingChanged ? debug : info)(
       `Fixed ${sprite.name}:`,
       sprite.path.includes(' ') ? `"${sprite.path}"` : sprite.path,
+      nothingChanged ? '(no changes)' : '',
     );
   } catch (err) {
     if (

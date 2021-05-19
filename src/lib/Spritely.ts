@@ -512,7 +512,7 @@ export class Spritely {
    * Compute a checksum based on the pixel values of an image.
    * Remains static even when file metadata changes.
    */
-  private static async pixelsChecksum(imagePath: string) {
+  static async pixelsChecksum(imagePath: string) {
     const values = ((await Image.load(imagePath)) as Image).data;
     return sha256(Buffer.from(values));
   }
