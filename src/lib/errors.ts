@@ -1,5 +1,6 @@
 import 'source-map-support/register';
 import fs from 'fs-extra';
+import { error } from './log';
 
 export class SpritelyError extends Error {
   constructor(message: string) {
@@ -21,15 +22,13 @@ export function assertDirectoryExists(directory: string) {
     assert(fs.existsSync(directory), `${directory} does not exist`);
     assert(
       fs.statSync(directory).isDirectory(),
-      `${directory} is not a folder`
+      `${directory} is not a folder`,
     );
   } catch (err) {
     if (err instanceof SpritelyError) {
       throw err;
     } else {
-      console.log(
-        'External error: Could not check for existence of directory.'
-      );
+      error('External error: Could not check for existence of directory.');
       throw err;
     }
   }
@@ -37,14 +36,14 @@ export function assertDirectoryExists(directory: string) {
 
 export function assertNonEmptyArray(
   something: any,
-  message = 'Expected non-empty array.'
+  message = 'Expected non-empty array.',
 ) {
   assert(Array.isArray(something) && something.length, message);
 }
 
 export function assertNumberGreaterThanZero(
   something: any,
-  message = 'Expected number greater than zero.'
+  message = 'Expected number greater than zero.',
 ) {
   assert(typeof something == 'number' && something > 0, message);
 }

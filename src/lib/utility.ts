@@ -7,6 +7,7 @@ import {
   listPathsSync,
   removeEmptyDirsSync,
 } from '@bscotch/utility';
+import { error } from './log';
 
 const FILE_FUNCTION_RETRY_WAIT_MILLIS = 100;
 
@@ -56,7 +57,7 @@ function createMessageIfPermanentError(fn: (...args: any[]) => void, err: any) {
  * (these are caused when Dropbox tries to do something on the same files).
  */
 function makeRetriable<FileOpFunction extends (...args: any[]) => any>(
-  fileOpFunction: FileOpFunction
+  fileOpFunction: FileOpFunction,
 ) {
   const retriableFunction = async (
     ...args: Parameters<FileOpFunction>
@@ -68,7 +69,7 @@ function makeRetriable<FileOpFunction extends (...args: any[]) => any>(
       fails++;
       const permanentFailureMessage = createMessageIfPermanentError(
         fileOpFunction,
-        err
+        err,
       );
       if (permanentFailureMessage) {
         throw permanentFailureMessage;
@@ -78,7 +79,7 @@ function makeRetriable<FileOpFunction extends (...args: any[]) => any>(
         await wait(FILE_FUNCTION_RETRY_WAIT_MILLIS);
         return retriableFunction(...args);
       }
-      console.log(failMessage);
+      error(failMessage);
       throw err;
     }
   };

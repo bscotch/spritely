@@ -5,9 +5,10 @@ import path from 'path';
 import { fsRetry as fs } from '../lib/utility';
 import { assert, SpritelyError } from '../lib/errors';
 import chokidar from 'chokidar';
+import { error, info, warning } from '../lib/log';
 
 function crash(err?: SpritelyError | Error) {
-  console.log(process.env.DEBUG == 'true' ? err : err?.message || err);
+  error(process.env.DEBUG == 'true' ? err : err?.message || err);
   process.exit(1);
 }
 
@@ -152,7 +153,7 @@ function getMethodOverridesFromName(name: string) {
     const overrideType = parts[2].match(/^--n/) ? 'remove' : 'add';
     const methodNickname = parts[2].replace(
       /--(no-|n)?/,
-      ''
+      '',
     ) as SpritelyMethodOverrideTag;
     const method = methodOverrideTagNames[methodNickname];
     assert(method, `${methodNickname} is not a valid method suffix.`);
@@ -167,7 +168,7 @@ type SpritelyFixMethod = 'crop' | 'bleed' | 'applyGradientMaps';
 async function fixSpriteDir(
   method: SpritelyFixMethod | SpritelyFixMethod[],
   spriteDir: string,
-  options: SpritelyCliGeneralOptions
+  options: SpritelyCliGeneralOptions,
 ) {
   try {
     const spriteOptions = {
@@ -186,9 +187,9 @@ async function fixSpriteDir(
           .filter(
             (method) =>
               !methodOverrides.remove.includes(
-                method as SpritelyMethodOverrideName
-              )
-          )
+                method as SpritelyMethodOverrideName,
+              ),
+          ),
       ),
     ];
     // Sort so that cropping happens before bleeding, making bleeding less costly.
@@ -220,7 +221,7 @@ async function fixSpriteDir(
     if (options.move) {
       const movedSpritePath = path.join(
         options.move,
-        path.relative(options.folder, spriteDir)
+        path.relative(options.folder, spriteDir),
       );
       // Clear any existing images in the target directory
       try {
@@ -231,10 +232,10 @@ async function fixSpriteDir(
       } catch {}
       await sprite.move(path.dirname(movedSpritePath));
     }
-    console.log(`Cleaned sprite "${spriteDir}".`);
+    info(`Cleaned sprite "${spriteDir}".`);
   } catch (err) {
     if (!options.recursive || err.message != 'No subimages found') {
-      console.log(`Sprite clean failed for "${spriteDir}".`, err?.message);
+      error(`Sprite clean failed for "${spriteDir}".`, err?.message);
       console.log(err);
     }
   }
@@ -243,7 +244,7 @@ async function fixSpriteDir(
 async function fixSpriteDirs(
   method: SpritelyFixMethod | SpritelyFixMethod[],
   spriteDirs: string[],
-  options: SpritelyCliGeneralOptions
+  options: SpritelyCliGeneralOptions,
 ) {
   for (const spriteDir of spriteDirs) {
     await fixSpriteDir(method, spriteDir, options);
@@ -256,14 +257,14 @@ function rootDir(fullpath: string, relativeTo = '.') {
 
 async function fixSprites(
   method: SpritelyFixMethod | SpritelyFixMethod[],
-  options: SpritelyCliGeneralOptions
+  options: SpritelyCliGeneralOptions,
 ) {
   if (options.rootImagesAreSprites) {
     // Find any root-level PNGs and move them into a folder by the same name
     const rootImages = await fs.listFilesByExtension(
       options.folder,
       'png',
-      false
+      false,
     );
     for (const rootImage of rootImages) {
       const name = path.parse(rootImage).name;
@@ -293,7 +294,7 @@ async function fixSprites(
   if (options.purgeTopLevelFolders && options.move) {
     const topLevelDirs = [
       ...new Set(
-        spriteDirs.map((spriteDir) => rootDir(spriteDir, options.folder))
+        spriteDirs.map((spriteDir) => rootDir(spriteDir, options.folder)),
       ),
     ].filter((x) => x);
     for (const topLevelDir of topLevelDirs) {
@@ -306,7 +307,7 @@ async function fixSprites(
         await fs.listPaths(moveDir, true)
       ).map(
         async (child) =>
-          child.endsWith('.png') || (await fs.stat(child)).isDirectory()
+          child.endsWith('.png') || (await fs.stat(child)).isDirectory(),
       );
       const childrenAreImagesOrFolders = (
         await Promise.all(childrenAreImagesOrFoldersChecks)
@@ -327,7 +328,7 @@ async function fixSprites(
 /** Prepare and run sprite fixers, include setting up watchers if needed. */
 export async function runFixer(
   method: SpritelyFixMethod | SpritelyFixMethod[],
-  options: SpritelyCliGeneralOptions
+  options: SpritelyCliGeneralOptions,
 ) {
   if (options.debug) {
     process.env.DEBUG = 'true';
@@ -375,7 +376,7 @@ export async function runFixer(
   // Glob patterns need to have posix separators
   watcher
     .on('error', async (err: Error & { code?: string }) => {
-      console.log('Closing watcher due to error...');
+      warning('Closing watcher due to error...');
       await watcher.close();
       throw err;
     })
@@ -384,8 +385,8 @@ export async function runFixer(
     .on('unlinkDir', (dir) => {
       // If the root directory gets unlinked, close the watcher.
       if (path.resolve(dir) == path.resolve(options.folder)) {
-        console.log(
-          'Watched directory deleted. Requires manual restart once the directory exists again.'
+        warning(
+          'Watched directory deleted. Requires manual restart once the directory exists again.',
         );
         process.exit(1);
       }

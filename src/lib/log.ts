@@ -19,7 +19,6 @@ function getTimestamp() {
 
 function log(level: LogLevel, ...stuff: any[]) {
   const message = stuff.reduce((msg, item) => {
-    console.log(typeof item);
     const itemAsString =
       typeof item == 'object' ? JSON.stringify(item) : `${item}`;
     return `${msg} ${itemAsString}`;
