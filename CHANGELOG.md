@@ -1,3 +1,17 @@
+# [1.8.0](https://github.com/bscotch/spritely/compare/v1.7.0...v1.8.0) (2021-05-19)
+
+
+### Bug Fixes
+
+* When using the CLI 'move' option, existing subimages are deleted before being replaced. This seems to break watchers in VSCode. Simply overwriting is probably less fragile. ([ea86591](https://github.com/bscotch/spritely/commit/ea865917768d95e969c218a96189c39a849f9e17))
+
+
+### Features
+
+* Only show CLI logs for Sprites whose files actually got updated. This will dramatically reduce log output clutter. ([30a68bf](https://github.com/bscotch/spritely/commit/30a68bfb3a62ec71a270a37a101ce72ce1ca97a9))
+
+
+
 # [1.7.0](https://github.com/bscotch/spritely/compare/v1.6.11...v1.7.0) (2021-05-19)
 
 
