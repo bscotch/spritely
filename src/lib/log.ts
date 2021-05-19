@@ -21,11 +21,19 @@ function log(level: LogLevel, ...stuff: any[]) {
   const message = stuff.reduce((msg, item) => {
     const itemAsString =
       typeof item == 'object' ? JSON.stringify(item) : `${item}`;
+    if (!itemAsString) {
+      return msg;
+    }
+    if (!msg) {
+      return itemAsString;
+    }
     return `${msg} ${itemAsString}`;
   }, '');
-  const prefix = `${chalk.gray(getTimestamp())} ${level.toUpperCase()} `;
+  const prefix = `<${level.toUpperCase()} `;
   const colorer = chalk.black[logLevelColors[level]];
-  const prettyMessage = `${colorer(prefix)} ${message}`;
+  const prettyMessage = `${colorer(prefix)}${chalk.gray(
+    getTimestamp(),
+  )} ${message} ${colorer('>')}`;
   console.log(prettyMessage);
   return prettyMessage;
 }

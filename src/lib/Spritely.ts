@@ -70,23 +70,30 @@ interface SpritelyOptions {
 }
 
 export class Spritely {
-  private spriteRoot: string;
-  private subimagePaths: string[];
+  private spriteRoot: string = process.cwd();
+  private subimagePaths: string[] = [];
   private subimageWidth: number | undefined;
   private subimageHeight: number | undefined;
-  readonly allowSubimageSizeMismatch: boolean = false;
-  readonly gradientMapsFile?: string;
+  private options: SpritelyOptions;
+  allowSubimageSizeMismatch = false;
+  gradientMapsFile?: string;
 
   /**
    * Create a Sprite instance using a folder full of sprite subimages.
    * @param options Either the path to the sprite folder, or a SpritelyOptions object
    */
   constructor(options?: string | SpritelyOptions) {
-    options =
+    this.options =
       typeof options == 'string' ? { spriteDirectory: options } : options || {};
-    this.spriteRoot = options.spriteDirectory || process.cwd();
+    this.load();
+  }
+
+  private load() {
+    this.spriteRoot = this.options.spriteDirectory || this.spriteRoot;
     assertDirectoryExists(this.spriteRoot);
-    this.allowSubimageSizeMismatch = Boolean(options.allowSubimageSizeMismatch);
+    this.allowSubimageSizeMismatch = Boolean(
+      this.options.allowSubimageSizeMismatch,
+    );
 
     this.subimagePaths = Spritely.getSubimages(this.spriteRoot);
     const { width, height } = Spritely.getSubimagesSizeSync(
@@ -95,7 +102,8 @@ export class Spritely {
     );
     this.subimageWidth = width;
     this.subimageHeight = height;
-    this.gradientMapsFile = options.gradientMapsFile;
+    this.gradientMapsFile = this.options.gradientMapsFile;
+    return this;
   }
 
   /** The name of this sprite (its folder name) */
@@ -283,13 +291,15 @@ export class Spritely {
   }
 
   /**
-   * Shorthand for .copy() followedy by .delete()
+   * Shorthand for .copy() followedy by .delete().
+   * This instance will update itself to refer to the new location.
    */
   async move(destinationFolder: string) {
     debug('Moving', this.name, 'to', destinationFolder);
     await this.copy(destinationFolder);
     await this.delete();
-    return this;
+    this.options.spriteDirectory = path.join(destinationFolder, this.name);
+    return this.load();
   }
 
   getGradientMaps() {

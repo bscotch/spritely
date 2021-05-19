@@ -7,27 +7,7 @@ import { runFixer } from '../cli/util';
 import { SpritelyBatch } from '../lib/SpritelyBatch';
 import { Color } from '../lib/Color';
 import { GradientMap } from '../lib/GradientMap';
-
-const sandboxRoot = './sandbox';
-const samplesRoot = './samples';
-
-function resetSandbox() {
-  fs.ensureDirSync(sandboxRoot);
-  try {
-    fs.emptyDirSync(sandboxRoot);
-  } catch (err) {
-    console.log(err);
-  }
-  fs.copySync(samplesRoot, sandboxRoot);
-}
-
-function samplesPath(...subPathParts: string[]) {
-  return path.join(samplesRoot, ...(subPathParts || []));
-}
-
-function sandboxPath(...subPathParts: string[]) {
-  return path.join(sandboxRoot, ...(subPathParts || []));
-}
+import { resetSandbox, sandboxPath, samplesPath } from './util/sandbox';
 
 describe('Spritely', function () {
   beforeEach(function () {
@@ -246,7 +226,11 @@ describe('Spritely', function () {
       startingChecksums.length,
       'should be starting with two images',
     ).to.equal(2);
-    await runFixer('crop', { folder: sandboxPath('dir'), recursive: true });
+    await runFixer('crop', {
+      folder: sandboxPath('dir'),
+      recursive: true,
+      allowSubimageSizeMismatch: true,
+    });
     const endingChecksums = await getChecksums();
     expect(startingChecksums).to.not.eql(endingChecksums);
   });

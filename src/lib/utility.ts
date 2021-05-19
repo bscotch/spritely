@@ -7,7 +7,7 @@ import {
   listPathsSync,
   removeEmptyDirsSync,
 } from '@bscotch/utility';
-import { error } from './log';
+import { debug, error } from './log';
 
 const FILE_FUNCTION_RETRY_WAIT_MILLIS = 100;
 
@@ -46,9 +46,10 @@ type Unwrapped<T> = T extends PromiseLike<infer U> ? Unwrapped<U> : T;
 
 function createMessageIfPermanentError(fn: (...args: any[]) => void, err: any) {
   if (err?.code == 'ENOENT') {
-    return `File '${err?.path || err?.filename}' not found [${err.code}] -- ${
-      fn.name
-    } failed.`;
+    err.message = `File '${err?.path || err?.filename}' not found [${
+      err.code
+    }] -- ${fn.name} failed.`;
+    return err.message;
   }
 }
 
@@ -72,7 +73,8 @@ function makeRetriable<FileOpFunction extends (...args: any[]) => any>(
         err,
       );
       if (permanentFailureMessage) {
-        throw permanentFailureMessage;
+        debug('Permanent file system error', permanentFailureMessage);
+        throw err;
       }
       const failMessage = `${fileOpFunction.name} failed ${fails} times.`;
       if (fails < 10) {

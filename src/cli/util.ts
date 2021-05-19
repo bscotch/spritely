@@ -9,6 +9,7 @@ import { debug, error, info, warning } from '../lib/log';
 
 function crash(err?: SpritelyError | Error) {
   // If in debug mode, log the whole-assed error. Otherwise just the message.
+  error('Crashed due to uncaught error');
   console.log(process.env.DEBUG == 'true' ? err : err?.message || err);
   process.exit(1);
 }
@@ -197,7 +198,7 @@ async function fixSpriteDir(
     ];
     // Sort so that cropping happens before bleeding, making bleeding less costly.
     methods.sort().reverse();
-    debug(`Applying methods ${methods} to ${sprite.name}`);
+    debug(`Will apply ${methods} to ${sprite.name}`);
 
     // If the sprite uses suffixes, should nuke that folder and replace
     // it with one that doesn't have the suffixes.
@@ -241,11 +242,14 @@ async function fixSpriteDir(
       } catch {}
       await sprite.move(path.dirname(movedSpritePath));
     }
-    info(`Cleaned sprite "${spriteDir}".`);
+    info(
+      `Fixed ${sprite.name}:`,
+      sprite.path.includes(' ') ? `"${sprite.path}"` : sprite.path,
+    );
   } catch (err) {
     if (!options.recursive || err.message != 'No subimages found') {
       error(`Sprite clean failed for "${spriteDir}".`, err?.message);
-      console.log(err);
+      throw err;
     }
   }
 }
@@ -340,8 +344,6 @@ async function fixSprites(
   }
 }
 
-let runTally = 0;
-
 /** Prepare and run sprite fixers, include setting up watchers if needed. */
 export async function runFixer(
   method: SpritelyFixMethod | SpritelyFixMethod[],
@@ -349,11 +351,7 @@ export async function runFixer(
 ) {
   if (options.debug) {
     process.env.DEBUG = 'true';
-    debug('Running fixer in DEBUG mode');
-  }
-  runTally++;
-  if (runTally > 1) {
-    debug('Run number', runTally);
+    debug('DEBUG mode');
   }
   let debounceTimeout: NodeJS.Timeout | null = null;
   const pattern = path
@@ -378,17 +376,15 @@ export async function runFixer(
     }
     debug('Running fixer');
     running = true;
-    try {
-      await fixSprites(method, options);
-    } catch (err) {
-      console.log(err);
-    }
+    await fixSprites(method, options);
     // Turn off the watcher and reboot!
     // (Apparently this is the cleanest way to manage this?)
-    await watcher?.close();
-    clearTimeout(debounceTimeout!);
-    // running = false; // Only want to run once, since rebooting the whole thing, RIGHT?
-    runFixer(method, options);
+    // await watcher?.close();
+    // clearTimeout(debounceTimeout!);
+    running = false;
+    // if (options.watch) {
+    //   runFixer(method, options);
+    // }
   };
   if (!watcher) {
     return await run();
