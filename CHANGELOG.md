@@ -1,3 +1,24 @@
+# [1.7.0](https://github.com/bscotch/spritely/compare/v1.6.11...v1.7.0) (2021-05-19)
+
+
+### Bug Fixes
+
+* Spritely CLI does not properly check error cases to know which ones can be safely ignored. ([3906aa3](https://github.com/bscotch/spritely/commit/3906aa302eb2efee5235f0f8b3a3a518c9f70104))
+* The watcher is too fragile and has confusing behaviors. ([df6b412](https://github.com/bscotch/spritely/commit/df6b412139bac4c6360b6c0cc645ecb0da9e9d43))
+
+
+### Features
+
+* Add a logging utility for prettier STDOUT logs. ([2004183](https://github.com/bscotch/spritely/commit/2004183c5cef7ae5f7030f7447fb6ce569ec92c5))
+* Add debug option and logging to CLI commands, and fix minor stability issues with the watcher. ([08cd56c](https://github.com/bscotch/spritely/commit/08cd56c63fc76606a7a4af137ffbda9d3f2d9fa3))
+* Add Error codes to the Spritely error class, and a static method for testing a SpritelyError for a matching code/message. ([4bcbd28](https://github.com/bscotch/spritely/commit/4bcbd28220a50838233a29b4b7fd797464753353))
+* Have the watcher totally restart upon completion of a run. It is getting a lot of interference from Dropbox and this might help? ([402859a](https://github.com/bscotch/spritely/commit/402859a5ea522ba99a9cf235925a2d6b0dfc6c5f))
+* Replace console.log calls with the new loggers, where appropriate. ([a998476](https://github.com/bscotch/spritely/commit/a998476d9d503da5f022e6ec566aa3dc277b5670))
+* Update all deps and stop tracking the package lock file. ([2ec9991](https://github.com/bscotch/spritely/commit/2ec9991ce5c4028d5a3f15da3771f59c9dfc5718))
+* Use the new Spritely ErrorCodes in subimage size-checking methods. ([2cf5aa2](https://github.com/bscotch/spritely/commit/2cf5aa2eb141458bb0cb98a18c8da11abe61179a))
+
+
+
 ## [1.6.11](https://github.com/bscotch/spritely/compare/v1.6.10...v1.6.11) (2021-03-12)
 
 
