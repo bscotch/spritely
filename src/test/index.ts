@@ -229,7 +229,6 @@ describe('Spritely', function () {
     await runFixer('crop', {
       folder: sandboxPath('dir'),
       recursive: true,
-      allowSubimageSizeMismatch: true,
     });
     const endingChecksums = await getChecksums();
     expect(startingChecksums).to.not.eql(endingChecksums);

@@ -6,6 +6,7 @@ import {
   assertDirectoryExists,
   assertNonEmptyArray,
   assertNumberGreaterThanZero,
+  ErrorCodes,
 } from './errors';
 import { Image } from 'image-js';
 import yaml from 'yaml';
@@ -75,7 +76,6 @@ export class Spritely {
   private subimageWidth: number | undefined;
   private subimageHeight: number | undefined;
   private options: SpritelyOptions;
-  allowSubimageSizeMismatch = false;
   gradientMapsFile?: string;
 
   /**
@@ -88,13 +88,13 @@ export class Spritely {
     this.load();
   }
 
+  get allowSubimageSizeMismatch() {
+    return Boolean(this.options.allowSubimageSizeMismatch);
+  }
+
   private load() {
     this.spriteRoot = this.options.spriteDirectory || this.spriteRoot;
     assertDirectoryExists(this.spriteRoot);
-    this.allowSubimageSizeMismatch = Boolean(
-      this.options.allowSubimageSizeMismatch,
-    );
-
     this.subimagePaths = Spritely.getSubimages(this.spriteRoot);
     const { width, height } = Spritely.getSubimagesSizeSync(
       this.subimagePaths,
@@ -328,7 +328,7 @@ export class Spritely {
       .readdirSync(dir)
       .filter((subimagePath) => subimagePath.endsWith('.png'))
       .map((subimagePath) => path.join(dir, subimagePath));
-    assert(subimagePaths.length, `No subimages found`);
+    assert(subimagePaths.length, ErrorCodes.noImagesFound);
     return subimagePaths;
   }
 
@@ -342,7 +342,7 @@ export class Spritely {
     allowSizeMismatch = false,
   ) {
     const subimages = Array.isArray(path) ? path : Spritely.getSubimages(path);
-    assertNonEmptyArray(subimages, `No subimages found.`);
+    assertNonEmptyArray(subimages, ErrorCodes.noImagesFound);
     if (allowSizeMismatch) {
       return { height: undefined, width: undefined };
     }
@@ -352,10 +352,12 @@ export class Spritely {
       assert(
         width === expectedSize.width,
         `Subimage '${subimage}' has width ${width}; expected ${expectedSize.width}`,
+        ErrorCodes.sizeMismatch,
       );
       assert(
         height === expectedSize.height,
         `Subimage '${subimage}' has height ${height}; expected ${expectedSize.height}`,
+        ErrorCodes.sizeMismatch,
       );
     });
     return expectedSize;
