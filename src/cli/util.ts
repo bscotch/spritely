@@ -126,7 +126,8 @@ const methodOverrideTagNames = {
 } as const;
 
 type SpritelyMethodOverrideTag = keyof typeof methodOverrideTagNames;
-type SpritelyMethodOverrideName = typeof methodOverrideTagNames[SpritelyMethodOverrideTag];
+type SpritelyMethodOverrideName =
+  typeof methodOverrideTagNames[SpritelyMethodOverrideTag];
 
 /**
  * The sprite name may include suffixes to indicate overrides
@@ -232,14 +233,29 @@ async function fixSpriteDir(
       );
       // Clear any existing images in the target directory
       try {
-        const waits = (
-          await fs.listFilesByExtension(movedSpritePath, 'png')
-        ).map((existingSubimage) => {
+        const newNames = sprite.paths.map((p) => path.parse(p).base);
+        const existingSubimages = await fs.listFilesByExtension(
+          movedSpritePath,
+          'png',
+        );
+        const waits = existingSubimages.map((existingSubimage) => {
           debug('Removing', existingSubimage);
-          return fs.remove(existingSubimage);
+          // Remove IF this subimage is extraneous to the
+          // newer source.
+          const existingName = path.parse(existingSubimage).base;
+          if (!newNames.includes(existingName)) {
+            return fs.remove(existingSubimage);
+          }
+          return Promise.resolve();
         });
-        await Promise.allSettled(waits);
-      } catch {}
+        (await Promise.allSettled(waits)).forEach((wait, i) => {
+          if (wait.status == 'rejected') {
+            debug(`Remove attempt rejected`, existingSubimages[i]);
+          }
+        });
+      } catch (err) {
+        debug(err.message);
+      }
       await sprite.move(path.dirname(movedSpritePath));
     }
     info(
