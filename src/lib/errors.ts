@@ -1,19 +1,47 @@
 import 'source-map-support/register';
 import fs from 'fs-extra';
 import { error } from './log';
+import { wrapIfNotArray } from '@bscotch/utility';
+
+export enum ErrorCodes {
+  default = 'No error code.',
+  sizeMismatch = 'Subimage sizes do not match.',
+  noImagesFound = 'No images found.',
+}
 
 export class SpritelyError extends Error {
-  constructor(message: string) {
+  constructor(message: string, readonly code = ErrorCodes.default) {
     super(message);
     this.name = 'SpritelyError';
     Error.captureStackTrace(this, this.constructor);
   }
+
+  /**
+   * Check if an error is a VERY loose match to
+   * a given Spritely error code or a message.
+   * Treats codes and messages as interchangeable,
+   * checking each for equality. If more than one
+   * test code/message provided, returns true if *any* match.
+   */
+  static matches(err: any, codeOrMessage: string | string[]) {
+    codeOrMessage = wrapIfNotArray(codeOrMessage);
+    return (
+      err instanceof SpritelyError &&
+      codeOrMessage
+        .map((code) => [err.code, err.message].includes(code))
+        .filter((x) => x).length > 0
+    );
+  }
 }
 
 /** Throw an error if `claim` is falsey */
-export function assert(claim: any, messageIfFalsey: string): asserts claim {
+export function assert(
+  claim: any,
+  messageIfFalsey: string,
+  code?: ErrorCodes,
+): asserts claim {
   if (!claim) {
-    throw new SpritelyError(messageIfFalsey);
+    throw new SpritelyError(messageIfFalsey, code);
   }
 }
 
