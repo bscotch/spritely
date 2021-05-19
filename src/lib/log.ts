@@ -29,7 +29,7 @@ function log(level: LogLevel, ...stuff: any[]) {
     }
     return `${msg} ${itemAsString}`;
   }, '');
-  const prefix = `<${level.toUpperCase()} `;
+  const prefix = ` ${level.toUpperCase()} `;
   const colorer = chalk.black[logLevelColors[level]];
   const prettyMessage = `${colorer(prefix)}${chalk.gray(
     getTimestamp(),

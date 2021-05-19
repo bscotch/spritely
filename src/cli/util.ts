@@ -3,7 +3,7 @@ import commander from 'commander';
 import { Spritely } from '../lib/Spritely';
 import path from 'path';
 import { fsRetry as fs } from '../lib/utility';
-import { assert, SpritelyError } from '../lib/errors';
+import { assert, ErrorCodes, SpritelyError } from '../lib/errors';
 import chokidar from 'chokidar';
 import { debug, error, info, warning } from '../lib/log';
 
@@ -247,7 +247,14 @@ async function fixSpriteDir(
       sprite.path.includes(' ') ? `"${sprite.path}"` : sprite.path,
     );
   } catch (err) {
-    if (!options.recursive || err.message != 'No subimages found') {
+    if (
+      SpritelyError.matches(err, [
+        ErrorCodes.noImagesFound,
+        ErrorCodes.sizeMismatch,
+      ])
+    ) {
+      warning(`Skipped sprite "${spriteDir}": ${err.message}`);
+    } else {
       error(`Sprite clean failed for "${spriteDir}".`, err?.message);
       throw err;
     }
