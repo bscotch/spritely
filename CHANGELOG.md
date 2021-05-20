@@ -1,3 +1,12 @@
+# [2.0.0](https://github.com/bscotch/spritely/compare/v1.8.0...v2.0.0) (2021-05-20)
+
+
+### Features
+
+* Remove the purgeTopLevelFolders option in favor of a more surgical and understandable 'enforceSyncedBatches' option. The end effect will be the same for most use cases, but this will make external watchers more stable and reduce the liklihood of deleting things that should not be deleted. ([ab16bfe](https://github.com/bscotch/spritely/commit/ab16bfe246e4a71ef7dc04f83c567dc72836fb6d))
+
+
+
 # [1.8.0](https://github.com/bscotch/spritely/compare/v1.7.0...v1.8.0) (2021-05-19)
 
 
