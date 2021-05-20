@@ -1,4 +1,4 @@
-import { oneline } from '@bscotch/utility';
+import { oneline, RequiredBy } from '@bscotch/utility';
 import commander from 'commander';
 import { Spritely } from '../lib/Spritely';
 import path from 'path';
@@ -6,6 +6,33 @@ import { fsRetry as fs } from '../lib/utility';
 import { assert, ErrorCodes, SpritelyError } from '../lib/errors';
 import chokidar from 'chokidar';
 import { debug, error, info, warning } from '../lib/log';
+
+export interface SpritelyCliGeneralOptions {
+  folder: string;
+  recursive?: boolean;
+  allowSubimageSizeMismatch?: boolean;
+  move?: string;
+  rootImagesAreSprites?: boolean;
+  enforceSyncedBatches?: boolean;
+  ifMatch?: string;
+  deleteSource?: boolean;
+  gradientMapsFile?: string;
+  watch?: boolean;
+  debug?: boolean;
+}
+
+const methodOverrideTagNames = {
+  c: 'crop',
+  crop: 'crop',
+  b: 'bleed',
+  bleed: 'bleed',
+} as const;
+
+type SpritelyMethodOverrideTag = keyof typeof methodOverrideTagNames;
+type SpritelyMethodOverrideName =
+  typeof methodOverrideTagNames[SpritelyMethodOverrideTag];
+
+type SpritelyFixMethod = 'crop' | 'bleed' | 'applyGradientMaps';
 
 function crash(err?: SpritelyError | Error) {
   // If in debug mode, log the whole-assed error. Otherwise just the message.
@@ -16,20 +43,6 @@ function crash(err?: SpritelyError | Error) {
 
 process.on('uncaughtException', crash);
 process.on('unhandledRejection', crash);
-
-export interface SpritelyCliGeneralOptions {
-  folder: string;
-  recursive?: boolean;
-  allowSubimageSizeMismatch?: boolean;
-  move?: string;
-  rootImagesAreSprites?: boolean;
-  purgeTopLevelFolders?: boolean;
-  ifMatch?: string;
-  deleteSource?: boolean;
-  gradientMapsFile?: string;
-  watch?: boolean;
-  debug?: boolean;
-}
 
 export const cliOptions = {
   folder: [
@@ -43,10 +56,12 @@ export const cliOptions = {
   recursive: [
     '-r --recursive',
     oneline`
-      Treat --folder, and all folders inside --folder (recursively), as sprites.
-      USE WITH CAUTION!
+      Treat --folder, and all folders inside --folder (recursively), 
+      as sprites.
       Each folder with immediate PNG children is treated as a sprite,
-      with those children as its subimages.`,
+      with those children as its subimages. When using this mode, immediate
+      child folders of --folder are treated as "batches", providing
+      additional options (e.g. --enforce-synced-batches).`,
   ],
   watch: [
     '-w --watch',
@@ -72,10 +87,16 @@ export const cliOptions = {
       ones over.`,
   ],
   purge: [
-    '--purge-top-level-folders',
+    '--enforce-synced-batches',
     oneline`
-      Delete top-level folders (immediate children of --folder)
-      prior to moving changed images.`,
+      This treats top-level folders (immediate children of --folder)
+      as "batches" when using the 'move' option. When fixing sprites
+      inside of a batch, any sprites found in the move target but not
+      in the source are deleted. This lets you treat your art source
+      as the "truth", so that fixed assets available to a downstream
+      game completely match what the artist is intending to be in
+      the game (e.g. legacy sprites in a batch will be deleted from
+      the move target).`,
   ],
   /** Specify root images are sprites */
   rootImages: [
@@ -111,23 +132,36 @@ export function addGeneralOptions(cli: typeof commander) {
 }
 
 async function getSpriteDirs(folder: string, recursive?: boolean) {
-  const folders = recursive
-    ? [folder, ...(await fs.listFolders(folder, recursive))]
-    : [folder];
-  folders.reverse();
-  return folders;
+  if (!(await fs.pathExists(folder))) {
+    return [];
+  }
+  const allFolders = [folder];
+  if (recursive) {
+    const children = await fs.listFolders(folder, recursive);
+    allFolders.push(...children);
+  }
+  allFolders.reverse();
+  // Restrict to folders that have at least one child PNG file.
+  const spriteFolders: string[] = [];
+  for (const possibleSpriteFolder of allFolders) {
+    const childPngs = await fs.listFilesByExtension(
+      possibleSpriteFolder,
+      'png',
+      false,
+    );
+    if (childPngs.length) {
+      spriteFolders.push(possibleSpriteFolder);
+    }
+  }
+  return spriteFolders;
 }
 
-const methodOverrideTagNames = {
-  c: 'crop',
-  crop: 'crop',
-  b: 'bleed',
-  bleed: 'bleed',
-} as const;
-
-type SpritelyMethodOverrideTag = keyof typeof methodOverrideTagNames;
-type SpritelyMethodOverrideName =
-  typeof methodOverrideTagNames[SpritelyMethodOverrideTag];
+function getMovedSpritePath(
+  options: { move: string; folder: string },
+  spriteDir: string,
+) {
+  return path.join(options.move, path.relative(options.folder, spriteDir));
+}
 
 /**
  * The sprite name may include suffixes to indicate overrides
@@ -167,8 +201,6 @@ function getMethodOverridesFromName(name: string) {
   overrides.name = bareName;
   return overrides;
 }
-
-type SpritelyFixMethod = 'crop' | 'bleed' | 'applyGradientMaps';
 
 async function fixSpriteDir(
   method: SpritelyFixMethod | SpritelyFixMethod[],
@@ -234,9 +266,9 @@ async function fixSpriteDir(
     if (options.move) {
       debug('Moving modified sprite', sprite.name, 'to', options.folder);
       originalSubimageChecksums = [];
-      const movedSpritePath = path.join(
-        options.move,
-        path.relative(options.folder, spriteDir),
+      const movedSpritePath = getMovedSpritePath(
+        options as RequiredBy<SpritelyCliGeneralOptions, 'move'>,
+        spriteDir,
       );
       if (await fs.pathExists(movedSpritePath)) {
         // Clear any excess files!
@@ -301,7 +333,8 @@ async function fixSpriteDirs(
   }
 }
 
-function rootDir(fullpath: string, relativeTo = '.') {
+/** The name of the parent directory of a relative path. */
+function parentDirName(fullpath: string, relativeTo = '.') {
   return path.relative(relativeTo, fullpath).split(/[\\/]/g)[0];
 }
 
@@ -310,74 +343,132 @@ async function fixSprites(
   options: SpritelyCliGeneralOptions,
 ) {
   if (options.rootImagesAreSprites) {
-    // Find any root-level PNGs and move them into a folder by the same name
-    const rootImages = await fs.listFilesByExtension(
-      options.folder,
-      'png',
-      false,
-    );
-    for (const rootImage of rootImages) {
-      const name = path.parse(rootImage).name;
-      const newFolder = path.join(options.folder, name);
-      const newPath = path.join(newFolder, `${name}.png`);
-      await fs.ensureDir(newFolder);
-      await fs.move(rootImage, newPath);
-    }
+    await changeRootImagesToSprites(options);
   }
-  const ifMatch = options.ifMatch ? new RegExp(options.ifMatch) : null;
-  const spriteDirs = (
-    await getSpriteDirs(options.folder, options.recursive)
-  ).filter((spriteDir) => {
-    if (options.purgeTopLevelFolders || options.ifMatch) {
-      // Then make sure everything *has* a top-level folder
-      const topLevelDir = rootDir(spriteDir, options.folder);
-      if (!topLevelDir) {
-        return false;
-      }
-      if (!ifMatch) {
-        return true;
-      }
-      return topLevelDir.match(ifMatch);
-    }
-    return true;
-  });
-  if (options.purgeTopLevelFolders && options.move) {
-    const topLevelDirs = [
-      ...new Set(
-        spriteDirs.map((spriteDir) => rootDir(spriteDir, options.folder)),
-      ),
-    ].filter((x) => x);
-    for (const topLevelDir of topLevelDirs) {
-      const moveDir = path.join(options.move, topLevelDir);
-      const exists = await fs.pathExists(moveDir);
-      if (!exists) {
-        continue;
-      }
-      const childrenAreImagesOrFoldersChecks = (
-        await fs.listPaths(moveDir, true)
-      ).map(
-        async (child) =>
-          child.endsWith('.png') || (await fs.stat(child)).isDirectory(),
-      );
-      const childrenAreImagesOrFolders = (
-        await Promise.all(childrenAreImagesOrFoldersChecks)
-      ).every((yep) => yep);
-      if (!childrenAreImagesOrFolders) {
-        debug(
-          'Cannot empty top-level dir',
-          topLevelDir,
-          'because some contents are neither images nor folders.',
-        );
-        continue;
-      }
-      debug('Emptying top-level dir', moveDir);
-      await fs.emptyDir(moveDir);
-      await fs.rmdir(moveDir);
-    }
+  const spriteDirs = await findMatchingSpriteDirs(options);
+  if (options.enforceSyncedBatches && options.move) {
+    // Then we need to make sure that moving doesn't create
+    // any problems, and that things stay synced
+    // (extraneous files in the target are removed)
+    await cleanBatchMoveTarget(spriteDirs, options);
   }
   await fixSpriteDirs(method, spriteDirs, options);
   if (options.move) {
     fs.removeEmptyDirs(options.folder, { excludeRoot: true });
+  }
+}
+
+/**
+ * When ensuring that a sprite batch is synced with its move-to
+ * location, extraneous sprites in the downstream
+ * batch location must be removed.
+ */
+async function cleanBatchMoveTarget(
+  spriteDirs: string[],
+  options: SpritelyCliGeneralOptions,
+) {
+  const batches = getSpriteDirsByBatch(spriteDirs, options);
+  for (const batchName of batches.names) {
+    const moveDir = path.join(options.move!, batchName);
+    const exists = await fs.pathExists(moveDir);
+    if (!exists) {
+      // No possible conflicts
+      debug(
+        `Skipping batch-syncing for ${batchName}: target folder does not exist`,
+      );
+      return;
+    }
+    // See what sprites are already here and delete
+    // those that aren't also in the source.
+    const spriteDirsInMoveFolder = await findMatchingSpriteDirs({
+      ...options,
+      folder: moveDir,
+    });
+    const relativeSpriteDirsInMoveFolder = spriteDirsInMoveFolder.map((d) => {
+      return path.relative(options.move!, d);
+    });
+    const extraneousSpriteDirsInMoveFolder =
+      relativeSpriteDirsInMoveFolder.filter((d) => {
+        return !batches.batches[batchName].includes(d);
+      });
+    for (const extraFolder of extraneousSpriteDirsInMoveFolder) {
+      // Already know there are images in here, that's how we got the folder
+      const extraFolderPath = path.join(options.move!, extraFolder);
+      const extraChildren = await fs.listFilesByExtension(
+        extraFolderPath,
+        'png',
+        false,
+      );
+      for (const extraChild of extraChildren) {
+        debug(`Deleting "${extraChild}" to sync batch to source`);
+        await fs.remove(extraChild);
+      }
+      // Attempt to clean up the folder in case there's nothing in it.
+      await fs.removeEmptyDirs(extraFolderPath);
+    }
+  }
+}
+
+interface SpriteDirBatches {
+  names: string[];
+  /**
+   * For each batch, the array of sprite dir paths,
+   * *relative to* the root (therefore will be the same
+   * in either source or move target)
+   */
+  batches: { [batchName: string]: string[] };
+}
+
+function getSpriteDirsByBatch(
+  spriteDirs: string[],
+  options: SpritelyCliGeneralOptions,
+) {
+  const batches: SpriteDirBatches = { names: [], batches: {} };
+  for (const spriteDir of spriteDirs) {
+    const batchName = parentDirName(spriteDir, options.folder);
+    if (!batches.names.includes(batchName)) {
+      batches.names.push(batchName);
+      batches.batches[batchName] = [];
+    }
+    batches.batches[batchName].push(path.relative(options.folder, spriteDir));
+  }
+  return batches;
+}
+
+async function findMatchingSpriteDirs(options: SpritelyCliGeneralOptions) {
+  const ifMatch = options.ifMatch ? new RegExp(options.ifMatch) : null;
+  const allSpriteDirs = await getSpriteDirs(options.folder, options.recursive);
+  return allSpriteDirs.filter((spriteDir) => {
+    if (options.enforceSyncedBatches || ifMatch) {
+      // Then limit to things that have a top-level folder
+      const topLevelDir = parentDirName(spriteDir, options.folder);
+      if (!topLevelDir) {
+        debug(`Skipping ${spriteDir}: does not have top-level folder.`);
+        return false;
+      }
+      const matchesFilter = !ifMatch || topLevelDir.match(ifMatch);
+      if (!matchesFilter) {
+        debug(`Skipping ${spriteDir}: does not match filter ${ifMatch}`);
+      }
+      return matchesFilter;
+    }
+    return true;
+  });
+}
+
+async function changeRootImagesToSprites(options: SpritelyCliGeneralOptions) {
+  // Find any root-level PNGs and move them into a folder by the same name
+  const rootImages = await fs.listFilesByExtension(
+    options.folder,
+    'png',
+    false,
+  );
+  for (const rootImage of rootImages) {
+    const name = path.parse(rootImage).name;
+    const newFolder = path.join(options.folder, name);
+    const newPath = path.join(newFolder, `${name}.png`);
+    await fs.ensureDir(newFolder);
+    await fs.move(rootImage, newPath);
   }
 }
 
@@ -390,6 +481,10 @@ export async function runFixer(
     process.env.DEBUG = 'true';
     debug('DEBUG mode');
   }
+  assert(
+    options.enforceSyncedBatches ? options.recursive : true,
+    `'Batches' do not exist unless using recursive mode.`,
+  );
   let debounceTimeout: NodeJS.Timeout | null = null;
   const pattern = path
     .join(options.folder, '**', '*.png')

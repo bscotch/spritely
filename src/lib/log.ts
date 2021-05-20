@@ -31,9 +31,9 @@ function log(level: LogLevel, ...stuff: any[]) {
   }, '');
   const prefix = ` ${level.toUpperCase()} `;
   const colorer = chalk.black[logLevelColors[level]];
-  const prettyMessage = `${colorer(prefix)}${chalk.gray(
-    getTimestamp(),
-  )} ${message} ${colorer('>')}`;
+  const prettyMessage = `${chalk.gray('Spritely')}${colorer(
+    prefix,
+  )}${chalk.gray(getTimestamp())} ${message} ${colorer('>')}`;
   console.log(prettyMessage);
   return prettyMessage;
 }

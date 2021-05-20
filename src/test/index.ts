@@ -265,7 +265,7 @@ describe('Spritely', function () {
     const options = {
       folder,
       recursive: true,
-      purgeTopLevelFolders: true,
+      enforceSyncedBatches: true,
       move: sandboxPath(movedFolderName),
       watch: true,
     };
@@ -278,22 +278,37 @@ describe('Spritely', function () {
   });
 
   it('can move a sprite', async function () {
-    expect(
-      () => new Spritely(sandboxPath('dir', 'subdir', 'subsubdir')),
-    ).to.not.throw();
+    const sourceDir = sandboxPath('dir', 'subdir', 'subsubdir');
+    expect(() => new Spritely(sourceDir)).to.not.throw();
     const options = {
       folder: sandboxPath('dir'),
       move: sandboxPath('moved'),
       recursive: true,
-      purgeTopLevelFolders: true,
     };
     await runFixer(['crop', 'bleed'], options);
     // Should be able to load the sprite from where it was moved
     new Spritely(sandboxPath('moved', 'subdir', 'subsubdir'));
     // Should get errors when trying to get the original sprite
-    expect(
-      () => new Spritely(sandboxPath('dir', 'subdir', 'subsubdir')),
-    ).to.throw();
+    expect(() => new Spritely(sourceDir)).to.throw();
+
+    // Extraneous should be there CURRENTLY since we just ran without that setting
+    const extraPath = sandboxPath('moved', 'subdir', 'extraneous');
+    new Spritely(extraPath); // should not throw!
+  });
+
+  it('can move a sprite and force batch syncing', async function () {
+    const options = {
+      folder: sandboxPath('dir'),
+      move: sandboxPath('moved'),
+      recursive: true,
+      enforceSyncedBatches: true,
+    };
+    await runFixer(['crop', 'bleed'], options);
+    // Should be able to load the sprite from where it was moved
+    new Spritely(sandboxPath('moved', 'subdir', 'subsubdir'));
+    // Should have cleared extraneous sprite in move target
+    const extraPath = sandboxPath('moved', 'subdir', 'extraneous');
+    expect(() => new Spritely(extraPath)).to.throw();
   });
 
   it('can crop sprites with differently-sized subimages', async function () {
