@@ -37,7 +37,7 @@ type SpritelyFixMethod = 'crop' | 'bleed' | 'applyGradientMaps';
 function crash(err?: SpritelyError | Error) {
   // If in debug mode, log the whole-assed error. Otherwise just the message.
   error('Crashed due to uncaught error');
-  console.log(process.env.DEBUG == 'true' ? err : err?.message || err);
+  console.log(err);
   process.exit(1);
 }
 
@@ -354,7 +354,7 @@ async function fixSprites(
   }
   await fixSpriteDirs(method, spriteDirs, options);
   if (options.move) {
-    fs.removeEmptyDirs(options.folder, { excludeRoot: true });
+    await fs.removeEmptyDirs(options.folder, { excludeRoot: true });
   }
 }
 
@@ -493,7 +493,10 @@ export async function runFixer(
   const watcher = !options.watch
     ? null
     : chokidar.watch(pattern, {
-        ignorePermissionErrors: true,
+        // polling seems to be a lot more reliable (if also a lot less efficient)
+        usePolling: true,
+        interval: 1000,
+        binaryInterval: 1000,
         awaitWriteFinish: {
           stabilityThreshold: 500,
           pollInterval: 100,
@@ -534,8 +537,14 @@ export async function runFixer(
       await watcher.close();
       throw err;
     })
-    .on('add', debouncedRun)
-    .on('change', debouncedRun)
+    .on('add', (f) => {
+      debug(`Detected added file "${f}"`);
+      void debouncedRun();
+    })
+    .on('change', (f) => {
+      debug(`Detected changed file "${f}"`);
+      void debouncedRun();
+    })
     .on('unlinkDir', (dir) => {
       // If the root directory gets unlinked, close the watcher.
       if (path.resolve(dir) == path.resolve(options.folder)) {
@@ -545,5 +554,4 @@ export async function runFixer(
         process.exit(1);
       }
     });
-  await run();
 }

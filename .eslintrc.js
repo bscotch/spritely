@@ -8,9 +8,11 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint', 'prettier'],
   parserOptions: {
-    ecmaVersion: 2018,
+    ecmaVersion: 2019,
     sourceType: 'module',
+    project: './tsconfig.json',
   },
+  ignorePatterns: ['.eslintrc.js'],
   rules: {
     '@typescript-eslint/ban-ts-ignore': 'off',
     '@typescript-eslint/type-annotation-spacing': 'off',
@@ -39,6 +41,7 @@ module.exports = {
     '@typescript-eslint/no-var-requires': 'error',
     '@typescript-eslint/prefer-namespace-keyword': 'error',
     '@typescript-eslint/triple-slash-reference': 'error',
+    '@typescript-eslint/no-floating-promises': ['error'],
     'no-var': 'error',
     'prefer-const': 'error',
     'prefer-rest-params': 'error',

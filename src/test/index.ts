@@ -267,7 +267,6 @@ describe('Spritely', function () {
       recursive: true,
       enforceSyncedBatches: true,
       move: sandboxPath(movedFolderName),
-      watch: true,
     };
     await runFixer('crop', options);
     const bledEqualsReference = await Spritely.imagesAreEqual(

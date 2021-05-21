@@ -16,13 +16,13 @@
     "spritely": "build/cli/spritely.js"
   },
   "scripts": {
-    "test": "mocha --inspect --require source-map-support/register --bail ./build/test/index.js",
+    "test": "npm run build && mocha --inspect --require source-map-support/register --bail ./build/test/index.js",
     "build": "rm -rf build && npx tsc",
-    "preversion": "git checkout develop && npm run build && npm test",
+    "preversion": "git checkout develop && npm test",
     "version": "npx conventional-changelog -p angular -i CHANGELOG.md -s -r 0 && git add -A",
     "postversion": "git push origin develop && git checkout main && git merge develop && git push origin main --follow-tags && npm publish && git checkout develop",
     "tsc-live": "npx tsc -w",
-    "cli-test": "npm run build && node build/test/util/runResetSandbox.js && node build/cli/spritely-fix.js -rw --purge-top-level-folders -f sandbox/suffix-override -m sandbox/cli-test --debug"
+    "cli-test": "npm run build && node build/test/util/runResetSandbox.js && node build/cli/spritely-fix.js -rw --enforce-synced-batches -f sandbox/suffix-override -m sandbox/cli-test --debug"
   },
   "repository": {
     "type": "git",
