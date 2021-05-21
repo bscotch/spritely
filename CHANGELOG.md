@@ -1,3 +1,12 @@
+## [2.0.1](https://github.com/bscotch/spritely/compare/v2.0.0...v2.0.1) (2021-05-21)
+
+
+### Bug Fixes
+
+* Switch file watcher to use polling instead of more efficient methods, since polling is a lot more stable and can work with networked drives (and, presumably, Dropbox). ([7a167f7](https://github.com/bscotch/spritely/commit/7a167f7aff5fe3c979ee6c44329e8fea5c079a26))
+
+
+
 # [2.0.0](https://github.com/bscotch/spritely/compare/v1.8.0...v2.0.0) (2021-05-20)
 
 
