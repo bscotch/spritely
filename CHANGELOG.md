@@ -1,3 +1,12 @@
+## [2.0.2](https://github.com/bscotch/spritely/compare/v2.0.1...v2.0.2) (2021-05-27)
+
+
+### Features
+
+* Replace watcher mechanism with new one from generic debounce-watcher. ([1fcefe9](https://github.com/bscotch/spritely/commit/1fcefe9330ed74104046b83630628e7378cee2af))
+
+
+
 ## [2.0.1](https://github.com/bscotch/spritely/compare/v2.0.0...v2.0.1) (2021-05-21)
 
 
