@@ -4,8 +4,8 @@ import { Spritely } from '../lib/Spritely';
 import path from 'path';
 import { fsRetry as fs } from '../lib/utility';
 import { assert, ErrorCodes, SpritelyError } from '../lib/errors';
-import chokidar from 'chokidar';
 import { debug, error, info, warning } from '../lib/log';
+import { debounceWatch } from '@bscotch/debounce-watch';
 
 export interface SpritelyCliGeneralOptions {
   folder: string;
@@ -485,73 +485,13 @@ export async function runFixer(
     options.enforceSyncedBatches ? options.recursive : true,
     `'Batches' do not exist unless using recursive mode.`,
   );
-  let debounceTimeout: NodeJS.Timeout | null = null;
-  const pattern = path
-    .join(options.folder, '**', '*.png')
-    .split(path.sep)
-    .join(path.posix.sep);
-  const watcher = !options.watch
-    ? null
-    : chokidar.watch(pattern, {
-        // polling seems to be a lot more reliable (if also a lot less efficient)
-        usePolling: true,
-        interval: 1000,
-        binaryInterval: 1000,
-        awaitWriteFinish: {
-          stabilityThreshold: 500,
-          pollInterval: 100,
-        },
-      });
-  let running = false;
-  const run = async () => {
-    // Prevent overlapping runs
-    if (running) {
-      debug('Attempted to run while already running.');
-      return;
-    }
-    debug('Running fixer');
-    running = true;
-    await fixSprites(method, options);
-    // Turn off the watcher and reboot!
-    // (Apparently this is the cleanest way to manage this?)
-    // await watcher?.close();
-    // clearTimeout(debounceTimeout!);
-    running = false;
-    // if (options.watch) {
-    //   runFixer(method, options);
-    // }
-  };
-  if (!watcher) {
-    return await run();
-  }
-  const debouncedRun = async () => {
-    debug('Change detected, debouncing');
-    clearTimeout(debounceTimeout!);
-    debounceTimeout = setTimeout(run, 2000);
-  };
-  // Set up the watcher
-  // Glob patterns need to have posix separators
-  watcher
-    .on('error', async (err: Error & { code?: string }) => {
-      warning('Closing watcher due to error...');
-      await watcher.close();
-      throw err;
-    })
-    .on('add', (f) => {
-      debug(`Detected added file "${f}"`);
-      void debouncedRun();
-    })
-    .on('change', (f) => {
-      debug(`Detected changed file "${f}"`);
-      void debouncedRun();
-    })
-    .on('unlinkDir', (dir) => {
-      // If the root directory gets unlinked, close the watcher.
-      if (path.resolve(dir) == path.resolve(options.folder)) {
-        warning(
-          'Watched directory deleted. Requires manual restart once the directory exists again.',
-        );
-        process.exit(1);
-      }
+  const run = () => fixSprites(method, options);
+  if (options.watch) {
+    return await debounceWatch(run, options.folder, {
+      onlyFileExtensions: 'png',
+      logger: { info, debug, warn: warning, error },
     });
+  } else {
+    await run();
+  }
 }
