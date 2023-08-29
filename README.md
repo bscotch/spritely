@@ -1,3 +1,5 @@
+**⚠️ Spritely has been moved to the [Stitch Monorepo](https://github.com/bscotch/stitch/tree/develop/packages/spritely) ⚠️**
+
 # Spritely: Image correction and cleanup for 2D video game sprites
 
 In the [Gamemaker Studio video game engine](https://www.yoyogames.com/gamemaker)
